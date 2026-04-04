@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asteroid Tracker &amp; Mission Planner</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <style>
+        header { padding: 1.5rem 0; border-bottom: 1px solid var(--pico-muted-border-color); }
+        header h1 { margin: 0; }
+        .filters { display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .filters label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; font-weight: 600; margin: 0; }
+        .filters input { margin: 0; width: 12rem; }
+        .filters button { margin: 0; }
+        .placeholder-box {
+            border: 2px dashed var(--pico-muted-border-color);
+            border-radius: var(--pico-border-radius);
+            padding: 3rem;
+            text-align: center;
+            color: var(--pico-muted-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+        .hazardous-yes { color: var(--pico-del-color, #c0392b); font-weight: 600; }
+        #asteroidTable { overflow-x: auto; }
+        table { width: 100%; }
+    </style>
+</head>
+<body>
+    <header class="container">
+        <h1>Asteroid Tracker &amp; Mission Planner</h1>
+    </header>
+
+    <main class="container">
+
+        <!-- Filters -->
+        <section>
+            <div class="filters">
+                <label>
+                    Max Distance (AU)
+                    <input type="number" id="maxDistance" step="0.01" min="0" value="0.05">
+                </label>
+                <label>
+                    Min Value (USD)
+                    <input type="number" id="minValue" min="0" placeholder="Optional">
+                </label>
+                <button id="filterBtn">Apply Filters</button>
+            </div>
+        </section>
+
+        <!-- Asteroid table -->
+        <section id="asteroidTable">
+            <p aria-busy="true">Loading asteroids…</p>
+        </section>
+
+        <!-- Globe placeholder -->
+        <div class="placeholder-box" id="globeContainer">
+            3D Globe Coming on Day 3
+        </div>
+
+        <!-- Mission planner placeholder -->
+        <div class="placeholder-box" id="missionPlanner">
+            Mission Planner Coming on Day 4
+        </div>
+
+    </main>
+
+    <script>
+        function loadAsteroids(maxDist, minVal) {
+            const params = new URLSearchParams({ max_distance: maxDist });
+            if (minVal !== null && minVal !== "") {
+                params.append("min_value", minVal);
+            }
+
+            const url = `/api/asteroids?${params.toString()}`;
+            const container = document.getElementById("asteroidTable");
+            container.innerHTML = '<p aria-busy="true">Loading asteroids…</p>';
+
+            fetch(url)
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    return res.json();
+                })
+                .then(asteroids => {
+                    if (!Array.isArray(asteroids) || asteroids.length === 0) {
+                        container.innerHTML = "<p>No asteroids found for the selected filters.</p>";
+                        return;
+                    }
+
+                    const rows = asteroids.map(a => {
+                        const value = (a.price != null)
+                            ? `$${Number(a.price).toLocaleString()}`
+                            : "N/A";
+                        const hazardous = a.is_potentially_hazardous_asteroid
+                            ? '<span class="hazardous-yes">Yes</span>'
+                            : "No";
+
+                        return `<tr>
+                            <td>${a.name ?? "N/A"}</td>
+                            <td>${a.diameter_km != null ? Number(a.diameter_km).toFixed(3) : "N/A"}</td>
+                            <td>${a.miss_distance_au != null ? Number(a.miss_distance_au).toFixed(5) : "N/A"}</td>
+                            <td>${a.velocity_km_s != null ? Number(a.velocity_km_s).toFixed(2) : "N/A"}</td>
+                            <td>${value}</td>
+                            <td>${hazardous}</td>
+                        </tr>`;
+                    }).join("");
+
+                    container.innerHTML = `
+                        <figure>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Diameter (km)</th>
+                                        <th>Distance (AU)</th>
+                                        <th>Velocity (km/s)</th>
+                                        <th>Est. Value (USD)</th>
+                                        <th>Hazardous</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </figure>
+                        <p><small>${asteroids.length} asteroid(s) shown.</small></p>`;
+                })
+                .catch(err => {
+                    container.innerHTML = `<p style="color:var(--pico-del-color)">Error loading data: ${err.message}</p>`;
+                });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadAsteroids(0.05, null);
+
+            document.getElementById("filterBtn").addEventListener("click", () => {
+                const maxDist = document.getElementById("maxDistance").value || "0.05";
+                const minVal  = document.getElementById("minValue").value;
+                loadAsteroids(maxDist, minVal);
+            });
+        });
+    </script>
+</body>
+</html>
