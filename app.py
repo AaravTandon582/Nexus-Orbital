@@ -1,8 +1,14 @@
+import os
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
+from dotenv import load_dotenv
 
 from asteroid_data import get_asteroid_data, filter_asteroids
 from launchpad_data import get_launchpad_data
+
+load_dotenv()
+
+CESIUM_TOKEN = os.getenv('CESIUM_ION_TOKEN')
 
 app = Flask(__name__)
 CORS(app)
@@ -14,7 +20,7 @@ CORS(app)
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", cesium_token=CESIUM_TOKEN)
 
 
 # ---------------------------------------------------------------------------

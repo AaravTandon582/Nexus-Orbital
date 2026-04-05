@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asteroid Tracker &amp; Mission Planner</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
     <style>
         header { padding: 1.5rem 0; border-bottom: 1px solid var(--pico-muted-border-color); }
         header h1 { margin: 0; }
@@ -53,10 +55,8 @@
             <p aria-busy="true">Loading asteroids…</p>
         </section>
 
-        <!-- Globe placeholder -->
-        <div class="placeholder-box" id="globeContainer">
-            3D Globe Coming on Day 3
-        </div>
+        <!-- 3D Globe -->
+        <div id="globeContainer" style="height: 600px; margin: 2rem 0;"></div>
 
         <!-- Mission planner placeholder -->
         <div class="placeholder-box" id="missionPlanner">
@@ -136,6 +136,24 @@
                 const minVal  = document.getElementById("minValue").value;
                 loadAsteroids(maxDist, minVal);
             });
+        });
+    </script>
+
+    <script>
+        Cesium.Ion.defaultAccessToken = '{{ cesium_token }}';
+
+        const viewer = new Cesium.Viewer('globeContainer', {
+            terrain: Cesium.Terrain.fromWorldTerrain(),
+            timeline: false,
+            animation: false,
+            baseLayerPicker: false,
+            homeButton: true,
+            navigationHelpButton: false,
+            fullscreenButton: true
+        });
+
+        viewer.camera.setView({
+            destination: Cesium.Cartesian3.fromDegrees(0, 0, 20000000)
         });
     </script>
 </body>
