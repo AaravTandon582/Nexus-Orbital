@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 NASA_API_KEY = os.getenv("NASA_API_KEY", "DEMO_KEY")
-CACHE_FILE = "asteroid_cache.json"
+CACHE_FILE      = "asteroid_cache.json"       # raw NASA NEO feed
+FULL_CACHE_FILE = "asteroid_full_cache.json"  # fully enriched output
 CACHE_HOURS = 6
 
 
@@ -215,10 +216,90 @@ def fetch_asterank_data():
 
 
 def _clean_name(name):
-    """Lowercase, remove parenthetical segments, collapse whitespace."""
+    """Lowercase, remove parenthetical segments, collapse whitespace.
+    Primary key used by fetch_asterank_data for its lookup table.
+    """
     import re
     name = re.sub(r"\(.*?\)", "", name)
     return " ".join(name.lower().split())
+
+
+def _name_candidates(name):
+    """
+    Generate multiple lookup-key candidates for a NASA asteroid name so we
+    have the best chance of matching against Asterank's naming convention.
+
+    NASA formats seen in practice:
+      "(2013 GM3)"          → designation inside parens, no proper name
+      "363599 (2004 FG11)"  → number + designation in parens
+      "(433) Eros (1898 DQ)"→ number in parens, proper name, old designation
+      "326290 Akhenaten (1998 HE3)"
+
+    Asterank formats:
+      "433 eros", "2013 gm3", "1 ceres"
+    """
+    import re
+
+    low = name.lower()
+
+    # All content inside any set of parentheses
+    parens_texts = re.findall(r"\(([^)]+)\)", low)
+
+    # Text with ALL parenthetical segments removed
+    stripped = re.sub(r"\(.*?\)", "", low)
+    stripped = " ".join(stripped.split())
+
+    candidates = set()
+
+    # 1. Each parenthetical chunk on its own
+    for pt in parens_texts:
+        pt = " ".join(pt.split())
+        if pt:
+            candidates.add(pt)
+
+    # 2. Stripped text alone
+    if stripped:
+        candidates.add(stripped)
+
+    # 3. Leading number from stripped + each paren text
+    num_match = re.match(r"^(\d+)", stripped)
+    leading_num = num_match.group(1) if num_match else None
+    if leading_num:
+        for pt in parens_texts:
+            pt = " ".join(pt.split())
+            candidates.add(f"{leading_num} {pt}")
+            candidates.add(f"{pt} {leading_num}")
+
+    # 4. Combination of first-paren and stripped
+    if parens_texts and stripped:
+        fp = " ".join(parens_texts[0].split())
+        candidates.add(f"{fp} {stripped}")
+        candidates.add(f"{stripped} {fp}")
+
+    # 5. Full name normalised (no parens removal)
+    candidates.add(" ".join(low.split()))
+
+    # Remove empty and very-short noise tokens
+    return {c for c in candidates if len(c) > 1}
+
+
+def _estimate_value_usd(diameter_km):
+    """
+    Rough mining-value estimate based on diameter alone when Asterank has
+    no record.  Assumes average bulk density ~2 g/cm³ and a mix of water,
+    silicates, and metals at ~$1 per kg of accessible resource.
+    Returns USD float.
+    """
+    if not diameter_km or diameter_km <= 0:
+        return None
+    radius_km = diameter_km / 2.0
+    # Volume of sphere (km³)
+    vol_km3 = (4.0 / 3.0) * 3.14159 * radius_km ** 3
+    # Convert to tonnes: 1 km³ × 2e9 t/km³ (2 g/cm³ density)
+    mass_tonnes = vol_km3 * 2e9
+    # Rough value: $500/tonne accessible resource (very conservative)
+    value_usd = mass_tonnes * 500
+    return round(value_usd)
 
 
 # ---------------------------------------------------------------------------
@@ -227,18 +308,28 @@ def _clean_name(name):
 
 def merge_valuations(asteroids, asterank_data):
     """
-    Match NASA asteroids to Asterank records by name.
-    Adds profit and price fields; sets to None when no match is found.
+    Match NASA asteroids to Asterank records using multiple name-key
+    candidates.  Falls back to a diameter-based estimate when no Asterank
+    record is found so the UI always shows a value.
     """
     for asteroid in asteroids:
-        clean = _clean_name(asteroid.get("name", ""))
-        match = asterank_data.get(clean)
+        raw_name = asteroid.get("name", "")
+        candidates = _name_candidates(raw_name)
+
+        match = None
+        for key in candidates:
+            if key in asterank_data:
+                match = asterank_data[key]
+                break
+
         if match:
             asteroid["profit"] = match.get("profit")
             asteroid["price"] = match.get("price")
         else:
-            asteroid["profit"] = None
-            asteroid["price"] = None
+            # No Asterank record — use diameter-based estimate
+            estimated = _estimate_value_usd(asteroid.get("diameter_km"))
+            asteroid["profit"] = estimated
+            asteroid["price"] = estimated
     return asteroids
 
 
@@ -278,12 +369,41 @@ def filter_asteroids(
 
 
 # ---------------------------------------------------------------------------
+# Full-cache helpers (caches fully enriched data, not just raw NEO feed)
+# ---------------------------------------------------------------------------
+
+def _load_full_cache():
+    """Return fully-enriched asteroid list if cache is fresh, else None."""
+    if not os.path.exists(FULL_CACHE_FILE):
+        return None
+    try:
+        with open(FULL_CACHE_FILE, "r") as f:
+            cached = json.load(f)
+        saved_at = datetime.fromisoformat(cached["timestamp"])
+        if datetime.now() - saved_at < timedelta(hours=CACHE_HOURS):
+            return cached["data"]
+    except (KeyError, ValueError, json.JSONDecodeError):
+        pass
+    return None
+
+
+def _save_full_cache(data):
+    """Save fully-enriched asteroid list with current timestamp."""
+    payload = {"timestamp": datetime.now().isoformat(), "data": data}
+    with open(FULL_CACHE_FILE, "w") as f:
+        json.dump(payload, f)
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
 def get_asteroid_data(days_ahead=60, max_distance_au=0.05):
     """
     Fetch, enrich, and return asteroid data for the next `days_ahead` days.
+
+    Caches the *fully enriched* result (NASA feed + Asterank valuations +
+    JPL orbital elements) so repeated calls are instant instead of ~15 s.
 
     Parameters
     ----------
@@ -297,6 +417,12 @@ def get_asteroid_data(days_ahead=60, max_distance_au=0.05):
     list of dict
         Fully enriched asteroid records.
     """
+    # Fast path: return cached enriched data when fresh
+    cached = _load_full_cache()
+    if cached is not None:
+        return cached
+
+    # Slow path: fetch + enrich + save
     today = datetime.now().date()
     start = datetime.combine(today, datetime.min.time())
     end = datetime.combine(today + timedelta(days=days_ahead), datetime.min.time())
@@ -305,6 +431,8 @@ def get_asteroid_data(days_ahead=60, max_distance_au=0.05):
     asterank_data = fetch_asterank_data()
     asteroids = merge_valuations(asteroids, asterank_data)
     asteroids = enrich_with_orbits(asteroids)
+
+    _save_full_cache(asteroids)
     return asteroids
 
 

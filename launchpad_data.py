@@ -24,16 +24,27 @@ ROCKET_SPECS = {
     "Proton":        {"cost": 65_000_000,    "leo_capacity": 23_000},
 }
 
-# Simplified pad → rocket mapping for the prototype
+# Simplified pad → rocket mapping for the prototype.
+# Keys are substrings of the actual Launch Library 2 pad names (case-insensitive).
 PAD_ROCKET_MAP = {
-    "Kennedy LC-39A":   ["Falcon 9", "Falcon Heavy"],
-    "Kennedy LC-39B":   ["SLS"],
-    "Vandenberg SLC-4E":["Falcon 9"],
-    "Baikonur":         ["Soyuz", "Proton"],
-    "Kourou ELA-3":     ["Ariane 5", "Ariane 6"],
-    "Satish Dhawan":    ["PSLV", "GSLV"],
-    "Tanegashima":      ["H-IIA", "H-IIB"],
-    "Rocket Lab LC-1":  ["Electron"],
+    # USA — Kennedy Space Center
+    "Launch Complex 39A":        ["Falcon 9", "Falcon Heavy"],
+    "Launch Complex 39B":        ["SLS"],
+    # USA — Vandenberg
+    "Space Launch Complex 4E":   ["Falcon 9"],
+    # Kazakhstan — Baikonur
+    "81/23":                     ["Proton"],
+    "1/5":                       ["Soyuz"],
+    "Site 1":                    ["Soyuz"],
+    # French Guiana — Kourou
+    "Ariane Launch Area 3":      ["Ariane 5", "Ariane 6"],
+    "Ariane Launch Area 4":      ["Ariane 5"],
+    # India — Sriharikota
+    "Satish Dhawan":             ["PSLV", "GSLV"],
+    # Japan — Tanegashima
+    "Yoshinobu":                 ["H-IIA", "H-IIB"],
+    # New Zealand — Rocket Lab
+    "LC-1":                      ["Electron"],
 }
 
 

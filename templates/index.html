@@ -8,24 +8,126 @@
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
     <style>
+        /* ── Layout ────────────────────────────────────────────────────── */
         header { padding: 1.5rem 0; border-bottom: 1px solid var(--pico-muted-border-color); }
         header h1 { margin: 0; }
         .filters { display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
         .filters label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; font-weight: 600; margin: 0; }
         .filters input { margin: 0; width: 12rem; }
         .filters button { margin: 0; }
-        .placeholder-box {
-            border: 2px dashed var(--pico-muted-border-color);
-            border-radius: var(--pico-border-radius);
-            padding: 3rem;
-            text-align: center;
-            color: var(--pico-muted-color);
-            margin-bottom: 1.5rem;
-            font-size: 1.1rem;
-        }
-        .hazardous-yes { color: var(--pico-del-color, #c0392b); font-weight: 600; }
         #asteroidTable { overflow-x: auto; }
         table { width: 100%; }
+        .hazardous-yes { color: var(--pico-del-color, #c0392b); font-weight: 600; }
+
+        /* Clicking a row selects the asteroid for mission planning */
+        #asteroidTable tbody tr { cursor: pointer; transition: background 0.15s; }
+        #asteroidTable tbody tr:hover { background: var(--pico-secondary-background); }
+        #asteroidTable tbody tr.selected { background: color-mix(in srgb, var(--pico-primary) 15%, transparent); }
+
+        /* ── Globe ─────────────────────────────────────────────────────── */
+        #globeContainer { height: 600px; margin: 2rem 0; border-radius: var(--pico-border-radius); overflow: hidden; }
+
+        /* ── Legend ────────────────────────────────────────────────────── */
+        .legend-section { margin: 0 0 2rem 0; }
+        .legend-grid { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 0.75rem; }
+        .legend-group { display: flex; flex-direction: column; gap: 0.4rem; }
+        .legend-group h4 { margin: 0 0 0.3rem 0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; }
+        .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
+        .dot {
+            width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+            box-shadow: 0 0 4px currentColor;
+        }
+        .dot-blue   { background: #3498db; color: #3498db; }
+        .dot-red    { background: #e74c3c; color: #e74c3c; }
+        .dot-green  { background: #2ecc71; color: #2ecc71; }
+        .dot-orange { background: #e67e22; color: #e67e22; }
+        .dot-yellow { background: #f1c40f; color: #f1c40f; }
+
+        /* ── Mission Planner ───────────────────────────────────────────── */
+        #missionPlanner { margin: 2rem 0; }
+        #missionPlanner h2 { margin-bottom: 0.25rem; }
+        .mission-intro { color: var(--pico-muted-color); margin-bottom: 1.5rem; font-size: 0.95rem; }
+        .mission-form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; align-items: end; margin-bottom: 1rem; }
+        @media (max-width: 768px) { .mission-form-grid { grid-template-columns: 1fr; } }
+        .form-field { display: flex; flex-direction: column; gap: 0.3rem; }
+        .form-field label { font-weight: 600; font-size: 0.9rem; }
+        .form-field input { margin: 0; }
+        #selectedAsteroidDisplay {
+            padding: 0.6rem 1rem; background: var(--pico-secondary-background);
+            border-radius: var(--pico-border-radius); border: 1px solid var(--pico-muted-border-color);
+            font-size: 0.95rem; min-height: 2.5rem;
+            display: flex; align-items: center;
+        }
+        #selectedAsteroidDisplay.empty { color: var(--pico-muted-color); font-style: italic; }
+        .mission-actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; }
+
+        /* Loading spinner */
+        #missionLoading { display: none; align-items: center; gap: 1rem; margin: 1rem 0; }
+        .spinner {
+            width: 28px; height: 28px; border: 3px solid var(--pico-muted-border-color);
+            border-top-color: var(--pico-primary); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Mission result cards */
+        #missionResults { margin-top: 1.5rem; }
+        .mission-card {
+            border: 1px solid var(--pico-muted-border-color); border-radius: var(--pico-border-radius);
+            padding: 1.25rem 1.5rem; margin-bottom: 1rem;
+            background: var(--pico-background-color);
+            transition: box-shadow 0.2s;
+        }
+        .mission-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        .mission-card.rank-1 {
+            border-color: var(--pico-primary);
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--pico-primary) 20%, transparent);
+        }
+        .card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+        .card-rank { font-size: 1.8rem; font-weight: 800; opacity: 0.6; }
+        .card-rank.rank-1 { color: var(--pico-primary); opacity: 1; }
+        .best-badge { font-size: 0.75rem; background: var(--pico-primary); color: #fff; padding: 0.2rem 0.6rem; border-radius: 1rem; font-weight: 600; }
+        .card-title { font-size: 1.1rem; font-weight: 600; }
+        .card-metrics { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+        .metric { display: flex; flex-direction: column; }
+        .metric-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.6; }
+        .metric-value { font-size: 1rem; font-weight: 500; }
+        .profit-positive { color: #2ecc71; font-weight: 700; }
+        .profit-negative { color: #e74c3c; font-weight: 700; }
+        .card-actions { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+        .card-checkbox-label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; cursor: pointer; }
+
+        /* Comparison */
+        #compareBar {
+            display: none; position: sticky; bottom: 0; left: 0; right: 0; z-index: 100;
+            background: var(--pico-primary); color: #fff; padding: 0.75rem 1.5rem;
+            display: none; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+        }
+        #compareBar.visible { display: flex; }
+        #compareBar button { margin: 0; background: #fff; color: var(--pico-primary); border: none; padding: 0.4rem 1rem; border-radius: var(--pico-border-radius); font-weight: 600; cursor: pointer; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 200;
+            background: rgba(0,0,0,0.5); align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: var(--pico-background-color); border-radius: var(--pico-border-radius);
+            padding: 2rem; max-width: 95vw; max-height: 90vh; overflow: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-close { font-size: 1.4rem; cursor: pointer; background: none; border: none; line-height: 1; }
+        .best-cell { background: color-mix(in srgb, #2ecc71 20%, transparent); font-weight: 700; }
+        #comparisonTable th, #comparisonTable td { white-space: nowrap; padding: 0.6rem 1rem; }
+
+        /* Error messages */
+        .error-msg { color: var(--pico-del-color, #c0392b); padding: 0.75rem 1rem; border-radius: var(--pico-border-radius); background: color-mix(in srgb, var(--pico-del-color, #c0392b) 10%, transparent); margin: 0.5rem 0; }
+
+        /* Tooltip anchor */
+        [title] { cursor: help; border-bottom: 1px dotted var(--pico-muted-color); }
+        a[title], button[title] { cursor: pointer; border-bottom: none; }
     </style>
 </head>
 <body>
@@ -35,126 +137,847 @@
 
     <main class="container">
 
-        <!-- Filters -->
+        <!-- ── Filters ────────────────────────────────────────────────── -->
         <section>
             <div class="filters">
                 <label>
                     Max Distance (AU)
-                    <input type="number" id="maxDistance" step="0.01" min="0" value="0.05">
+                    <input type="number" id="maxDistance" step="0.01" min="0" value="0.05"
+                           aria-label="Maximum miss distance in astronomical units"
+                           title="Filter asteroids closer than this distance from Earth (1 AU ≈ 150 million km)">
                 </label>
                 <label>
                     Min Value (USD)
-                    <input type="number" id="minValue" min="0" placeholder="Optional">
+                    <input type="number" id="minValue" min="0" placeholder="Optional"
+                           aria-label="Minimum estimated mining value in USD">
                 </label>
-                <button id="filterBtn">Apply Filters</button>
+                <button id="filterBtn" aria-label="Apply filters to asteroid table">Apply Filters</button>
             </div>
         </section>
 
-        <!-- Asteroid table -->
-        <section id="asteroidTable">
+        <!-- ── Asteroid table ─────────────────────────────────────────── -->
+        <section id="asteroidTable" aria-live="polite">
             <p aria-busy="true">Loading asteroids…</p>
         </section>
 
-        <!-- 3D Globe -->
-        <div id="globeContainer" style="height: 600px; margin: 2rem 0;"></div>
+        <!-- ── 3D Globe ───────────────────────────────────────────────── -->
+        <div id="globeContainer" aria-label="3D interactive globe showing Earth, launchpads, and asteroids"></div>
 
-        <!-- Mission planner placeholder -->
-        <div class="placeholder-box" id="missionPlanner">
-            Mission Planner Coming on Day 4
-        </div>
+        <!-- ── Legend ────────────────────────────────────────────────── -->
+        <section class="legend-section">
+            <h3>Globe Legend</h3>
+            <div class="legend-grid">
+                <div class="legend-group">
+                    <h4>Launchpads</h4>
+                    <div class="legend-item"><div class="dot dot-blue"></div>United States</div>
+                    <div class="legend-item"><div class="dot dot-red"></div>Russia / Kazakhstan</div>
+                    <div class="legend-item"><div class="dot dot-green"></div>Europe (France/ESA)</div>
+                    <div class="legend-item"><div class="dot dot-orange"></div>Asia (India/Japan/China)</div>
+                    <div class="legend-item"><div class="dot dot-yellow"></div>Other</div>
+                </div>
+                <div class="legend-group">
+                    <h4>Asteroids (in space)</h4>
+                    <div class="legend-item"><div class="dot dot-red"></div>Potentially Hazardous</div>
+                    <div class="legend-item"><div class="dot dot-green"></div>High Value (&gt; $1B)</div>
+                    <div class="legend-item"><div class="dot dot-blue"></div>Other Near-Earth Asteroid</div>
+                </div>
+                <div class="legend-group">
+                    <h4>Trajectory Arcs</h4>
+                    <div class="legend-item"><div class="dot dot-green"></div>Profitable mission</div>
+                    <div class="legend-item"><div class="dot dot-yellow"></div>Break-even mission</div>
+                    <div class="legend-item"><div class="dot dot-red"></div>Loss-making mission</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Mission Planner ────────────────────────────────────────── -->
+        <section id="missionPlanner" aria-label="Mission planning tool">
+            <h2>Mission Planner</h2>
+            <p class="mission-intro">
+                Click an asteroid in the table above to select it, then choose a
+                departure window and click <strong>Calculate Optimal Missions</strong>.
+                The planner will find the best launch opportunities ranked by profit.
+            </p>
+
+            <!-- Selected asteroid display -->
+            <div class="form-field" style="margin-bottom:1rem;">
+                <label>Selected Asteroid</label>
+                <div id="selectedAsteroidDisplay" class="empty" aria-live="polite">
+                    No asteroid selected — click a row in the table above
+                </div>
+                <input type="hidden" id="selectedAsteroidId">
+            </div>
+
+            <!-- Date + TOF inputs -->
+            <div class="mission-form-grid">
+                <div class="form-field">
+                    <label for="depStart">Departure Window Start</label>
+                    <input type="date" id="depStart" aria-label="Departure window start date">
+                </div>
+                <div class="form-field">
+                    <label for="depEnd">Departure Window End</label>
+                    <input type="date" id="depEnd" aria-label="Departure window end date">
+                </div>
+                <div class="form-field">
+                    <label for="maxTOF"
+                           title="Maximum flight time allowed from Earth to asteroid (in days)">
+                        Max Flight Time (days)
+                    </label>
+                    <input type="number" id="maxTOF" value="365" min="30" max="1825"
+                           aria-label="Maximum flight time in days">
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mission-actions">
+                <button id="planMissionBtn" aria-label="Calculate optimal mission trajectories">
+                    Calculate Optimal Missions
+                </button>
+                <button id="clearMissionBtn" class="secondary outline" aria-label="Clear mission results">
+                    Clear
+                </button>
+            </div>
+
+            <!-- Loading indicator -->
+            <div id="missionLoading" role="status" aria-live="polite">
+                <div class="spinner"></div>
+                <span>Computing optimal trajectories — this may take 20–60 seconds…</span>
+            </div>
+
+            <!-- Error display -->
+            <div id="missionError" style="display:none;"></div>
+
+            <!-- Results -->
+            <div id="trajectoryStatus" style="display:none; padding:0.6rem 1rem; border-radius:var(--pico-border-radius); margin:0.5rem 0; font-size:0.9rem;"></div>
+            <div id="missionResults"></div>
+        </section>
 
     </main>
 
+    <!-- ── Comparison sticky bar ──────────────────────────────────────── -->
+    <div id="compareBar" role="complementary" aria-label="Mission comparison bar">
+        <span id="compareCount">0 missions selected</span>
+        <button id="doCompareBtn">Compare Selected</button>
+    </div>
+
+    <!-- ── Comparison modal ───────────────────────────────────────────── -->
+    <div class="modal-overlay" id="compareModal" role="dialog" aria-modal="true" aria-label="Mission comparison">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 style="margin:0">Mission Comparison</h3>
+                <button class="modal-close" id="closeCompareBtn" aria-label="Close comparison">&times;</button>
+            </div>
+            <div id="compareTableContainer"></div>
+        </div>
+    </div>
+
+    <!-- ================================================================
+         JavaScript
+    ================================================================ -->
+
+    <!-- ── Asteroid Table ─────────────────────────────────────────────── -->
     <script>
-        function loadAsteroids(maxDist, minVal) {
-            const params = new URLSearchParams({ max_distance: maxDist });
-            if (minVal !== null && minVal !== "") {
-                params.append("min_value", minVal);
+    "use strict";
+
+    let selectedAsteroid = null;   // currently chosen asteroid object
+
+    function fmtValue(v) {
+        if (v == null) return "N/A";
+        const n = Number(v);
+        if (n >= 1e12) return `$${(n/1e12).toFixed(1)}T`;
+        if (n >= 1e9)  return `$${(n/1e9).toFixed(2)}B`;
+        if (n >= 1e6)  return `$${(n/1e6).toFixed(1)}M`;
+        return `$${n.toLocaleString()}`;
+    }
+
+    function selectAsteroid(asteroid) {
+        selectedAsteroid = asteroid;
+        const display = document.getElementById("selectedAsteroidDisplay");
+        display.textContent = asteroid.name;
+        display.classList.remove("empty");
+        document.getElementById("selectedAsteroidId").value = asteroid.id;
+
+        // Highlight the selected row
+        document.querySelectorAll("#asteroidTable tbody tr").forEach(r =>
+            r.classList.remove("selected")
+        );
+        const rows = document.querySelectorAll("#asteroidTable tbody tr");
+        rows.forEach(r => {
+            if (r.dataset.asteroidId === String(asteroid.id)) {
+                r.classList.add("selected");
             }
+        });
 
-            const url = `/api/asteroids?${params.toString()}`;
-            const container = document.getElementById("asteroidTable");
-            container.innerHTML = '<p aria-busy="true">Loading asteroids…</p>';
+        // Scroll to mission planner
+        document.getElementById("missionPlanner").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
 
-            fetch(url)
-                .then(res => {
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    return res.json();
-                })
-                .then(asteroids => {
-                    if (!Array.isArray(asteroids) || asteroids.length === 0) {
-                        container.innerHTML = "<p>No asteroids found for the selected filters.</p>";
-                        return;
-                    }
+    function loadAsteroids(maxDist, minVal) {
+        const params = new URLSearchParams({ max_distance: maxDist });
+        if (minVal !== null && minVal !== "") params.append("min_value", minVal);
 
-                    const rows = asteroids.map(a => {
-                        const value = (a.price != null)
-                            ? `$${Number(a.price).toLocaleString()}`
-                            : "N/A";
-                        const hazardous = a.is_potentially_hazardous_asteroid
-                            ? '<span class="hazardous-yes">Yes</span>'
-                            : "No";
+        const container = document.getElementById("asteroidTable");
+        container.innerHTML = '<p aria-busy="true">Loading asteroids…</p>';
 
-                        return `<tr>
-                            <td>${a.name ?? "N/A"}</td>
-                            <td>${a.diameter_km != null ? Number(a.diameter_km).toFixed(3) : "N/A"}</td>
-                            <td>${a.miss_distance_au != null ? Number(a.miss_distance_au).toFixed(5) : "N/A"}</td>
-                            <td>${a.velocity_km_s != null ? Number(a.velocity_km_s).toFixed(2) : "N/A"}</td>
-                            <td>${value}</td>
-                            <td>${hazardous}</td>
-                        </tr>`;
-                    }).join("");
+        fetch(`/api/asteroids?${params}`)
+            .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+            .then(asteroids => {
+                if (!Array.isArray(asteroids) || asteroids.length === 0) {
+                    container.innerHTML = "<p>No asteroids found for the selected filters.</p>";
+                    return;
+                }
 
-                    container.innerHTML = `
-                        <figure>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Diameter (km)</th>
-                                        <th>Distance (AU)</th>
-                                        <th>Velocity (km/s)</th>
-                                        <th>Est. Value (USD)</th>
-                                        <th>Hazardous</th>
-                                    </tr>
-                                </thead>
-                                <tbody>${rows}</tbody>
-                            </table>
-                        </figure>
-                        <p><small>${asteroids.length} asteroid(s) shown.</small></p>`;
-                })
-                .catch(err => {
-                    container.innerHTML = `<p style="color:var(--pico-del-color)">Error loading data: ${err.message}</p>`;
+                const rows = asteroids.map(a => {
+                    const value = fmtValue(a.price);
+                    const haz = a.is_potentially_hazardous_asteroid
+                        ? '<span class="hazardous-yes" title="This asteroid could potentially impact Earth">Yes</span>'
+                        : "No";
+                    const hasOrbit = a.semi_major_axis_au ? "✓" : "–";
+                    return `<tr data-asteroid-id="${a.id}" tabindex="0" role="button"
+                                aria-label="Select asteroid ${a.name} for mission planning"
+                                title="Click to select this asteroid for mission planning">
+                        <td>${a.name ?? "N/A"}</td>
+                        <td>${a.diameter_km != null ? Number(a.diameter_km).toFixed(3) : "N/A"}</td>
+                        <td>${a.miss_distance_au != null ? Number(a.miss_distance_au).toFixed(5) : "N/A"}</td>
+                        <td>${a.velocity_km_s != null ? Number(a.velocity_km_s).toFixed(2) : "N/A"}</td>
+                        <td>${value}</td>
+                        <td>${haz}</td>
+                        <td title="${hasOrbit === "✓" ? "Orbital elements available — mission planning supported" : "No orbital elements — cannot plan mission"}">${hasOrbit}</td>
+                    </tr>`;
+                }).join("");
+
+                container.innerHTML = `
+                    <figure>
+                        <table>
+                            <thead><tr>
+                                <th>Name</th>
+                                <th>Diameter (km)</th>
+                                <th>Distance (AU)</th>
+                                <th>Velocity (km/s)</th>
+                                <th>Est. Value (USD)</th>
+                                <th>Hazardous</th>
+                                <th title="Orbital elements available for mission planning">Orbit Data</th>
+                            </tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </figure>
+                    <p><small>${asteroids.length} asteroid(s) shown. Click a row to plan a mission.</small></p>`;
+
+                // Click / keyboard select
+                document.querySelectorAll("#asteroidTable tbody tr").forEach((row, idx) => {
+                    const a = asteroids[idx];
+                    const handler = () => { if (a) selectAsteroid(a); };
+                    row.addEventListener("click", handler);
+                    row.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") handler(); });
                 });
+
+                // Re-highlight if something was already selected
+                if (selectedAsteroid) {
+                    document.querySelectorAll("#asteroidTable tbody tr").forEach(r => {
+                        if (r.dataset.asteroidId === String(selectedAsteroid.id)) {
+                            r.classList.add("selected");
+                        }
+                    });
+                }
+            })
+            .catch(err => {
+                container.innerHTML = `<p class="error-msg">Error loading data: ${err.message}</p>`;
+            });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        // Set default departure window to today + 30 days
+        const today = new Date();
+        const later = new Date(today); later.setDate(later.getDate() + 90);
+        const fmt = d => d.toISOString().slice(0, 10);
+        document.getElementById("depStart").value = fmt(today);
+        document.getElementById("depEnd").value   = fmt(later);
+
+        loadAsteroids(0.05, null);
+
+        document.getElementById("filterBtn").addEventListener("click", () => {
+            const maxDist = document.getElementById("maxDistance").value || "0.05";
+            const minVal  = document.getElementById("minValue").value;
+            loadAsteroids(maxDist, minVal);
+        });
+    });
+    </script>
+
+    <!-- ── Cesium Globe ───────────────────────────────────────────────── -->
+    <script>
+    "use strict";
+
+    Cesium.Ion.defaultAccessToken = '{{ cesium_token }}';
+
+    const viewer = new Cesium.Viewer("globeContainer", {
+        terrain: Cesium.Terrain.fromWorldTerrain(),
+        timeline: false,
+        animation: false,
+        baseLayerPicker: false,
+        homeButton: true,
+        navigationHelpButton: false,
+        fullscreenButton: true,
+    });
+
+    // Start zoomed out enough to see both surface and near-space asteroids
+    viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(0, 20, 25_000_000),
+    });
+
+    // Entity registries for later lookup
+    const launchpadEntities = {};  // padName → Cesium entity
+    const asteroidEntities  = {};  // asteroid id → Cesium entity
+    let   trajectoryEntity  = null;
+
+    // ── Launchpad country → colour ──────────────────────────────────────
+    function padColour(countryCode) {
+        const cc = (countryCode || "").toUpperCase();
+        if (["USA", "US"].includes(cc))               return Cesium.Color.BLUE;
+        if (["RUS", "KAZ"].includes(cc))              return Cesium.Color.RED;
+        if (["FRA", "GUF"].includes(cc))              return Cesium.Color.GREEN;
+        if (["IND", "JPN", "CHN"].includes(cc))       return Cesium.Color.ORANGE;
+        return Cesium.Color.YELLOW;
+    }
+
+    // ── Load launchpad markers ───────────────────────────────────────────
+    fetch("/api/launchpads")
+        .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+        .then(pads => {
+            pads.forEach(pad => {
+                const lat = parseFloat(pad.latitude);
+                const lon = parseFloat(pad.longitude);
+                if (isNaN(lat) || isNaN(lon)) return;
+
+                const colour = padColour(pad.country);
+
+                // Build rocket list for description
+                const rocketList = (pad.rockets || []).map(r =>
+                    `• ${r.name}  LEO: ${r.leo_capacity ? r.leo_capacity.toLocaleString() + " kg" : "N/A"}  Cost: ${r.cost ? "$" + r.cost.toLocaleString() : "N/A"}`
+                ).join("\n") || "No rockets listed";
+
+                const desc = `<b>${pad.name}</b><br>Country: ${pad.country || "N/A"}<br><pre style="font-size:0.85em;margin:0.5em 0 0">${rocketList}</pre>`;
+
+                const entity = viewer.entities.add({
+                    name: pad.name,
+                    position: Cesium.Cartesian3.fromDegrees(lon, lat, 0),
+                    point: {
+                        pixelSize: 12,
+                        color: colour,
+                        outlineColor: Cesium.Color.WHITE,
+                        outlineWidth: 1.5,
+                    },
+                    label: {
+                        text: pad.name,
+                        font: "12px sans-serif",
+                        fillColor: Cesium.Color.WHITE,
+                        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                        outlineWidth: 2,
+                        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                        pixelOffset: new Cesium.Cartesian2(0, -16),
+                        distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 5_000_000),
+                    },
+                    description: desc,
+                });
+                // Store country for color restoration after trajectory highlight
+                entity._padCountry = pad.country;
+                launchpadEntities[pad.name] = entity;
+            });
+        })
+        .catch(err => console.error("[globe] launchpad load failed:", err));
+
+    // ── Asteroid colour ─────────────────────────────────────────────────
+    function asteroidColour(ast) {
+        if (ast.is_hazardous)                                  return Cesium.Color.RED;
+        if ((ast.estimated_value || 0) > 1_000_000_000)       return Cesium.Color.GREEN;
+        return Cesium.Color.BLUE;
+    }
+
+    // ── Load asteroid markers ────────────────────────────────────────────
+    fetch("/api/asteroid-positions")
+        .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+        .then(positions => {
+            positions.forEach(ast => {
+                try {
+                    if (ast.x == null || ast.y == null || ast.z == null) return;
+                    const pos = new Cesium.Cartesian3(
+                        ast.x * 1000,
+                        ast.y * 1000,
+                        ast.z * 1000
+                    );
+                    const dist = Cesium.Cartesian3.magnitude(pos);
+                    if (dist < 6_371_000 || dist > 200_000_000_000) return; // sanity check
+
+                    const colour = asteroidColour(ast);
+                    const distStr = ast.miss_distance_au != null
+                        ? `${Number(ast.miss_distance_au).toFixed(4)} AU`
+                        : `${(Math.sqrt(ast.x**2 + ast.y**2 + ast.z**2) * 100).toFixed(0)} km`;
+
+                    const desc = `<b>${ast.name}</b><br>
+                        Est. Value: ${fmtValue(ast.estimated_value)}<br>
+                        Hazardous: ${ast.is_hazardous ? "<b style='color:red'>Yes</b>" : "No"}<br>
+                        Distance from Earth: ${distStr}<br>
+                        ${ast.position_approximate ? "<i>⚠ Position is approximate</i>" : ""}`;
+
+                    const entity = viewer.entities.add({
+                        name: ast.name,
+                        position: pos,
+                        point: {
+                            pixelSize: 18,
+                            color: colour,
+                            outlineColor: Cesium.Color.WHITE,
+                            outlineWidth: 1.5,
+                        },
+                        label: {
+                            text: ast.name,
+                            font: "11px sans-serif",
+                            fillColor: Cesium.Color.WHITE,
+                            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                            outlineWidth: 2,
+                            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                            pixelOffset: new Cesium.Cartesian2(0, -22),
+                            distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 80_000_000),
+                        },
+                        description: desc,
+                    });
+                    asteroidEntities[ast.id] = { entity, data: ast };
+                } catch(e) {
+                    console.warn("[globe] Skipping asteroid:", ast.name, e);
+                }
+            });
+        })
+        .catch(err => console.error("[globe] asteroid position load failed:", err));
+    </script>
+
+    <!-- ── Mission Planner ────────────────────────────────────────────── -->
+    <script>
+    "use strict";
+
+    let missionResults    = [];   // current set of result objects
+    let selectedMissions  = {};   // index → result object (for comparison)
+
+    // ── Helpers ─────────────────────────────────────────────────────────
+    function fmtUSD(v) {
+        if (v == null) return "N/A";
+        const n = Number(v);
+        if (n >= 1e12) return `$${(n/1e12).toFixed(2)}T`;
+        if (n >= 1e9)  return `$${(n/1e9).toFixed(2)}B`;
+        if (n >= 1e6)  return `$${(n/1e6).toFixed(1)}M`;
+        return `$${n.toLocaleString()}`;
+    }
+
+    function setLoading(on) {
+        const el = document.getElementById("missionLoading");
+        el.style.display = on ? "flex" : "none";
+        document.getElementById("planMissionBtn").disabled = on;
+        document.getElementById("planMissionBtn").setAttribute("aria-busy", String(on));
+    }
+
+    function showError(msg) {
+        const el = document.getElementById("missionError");
+        el.style.display = "block";
+        el.innerHTML = `<div class="error-msg">${msg}</div>`;
+    }
+
+    function clearError() {
+        const el = document.getElementById("missionError");
+        el.style.display = "none";
+        el.innerHTML = "";
+    }
+
+    // ── Render result cards ─────────────────────────────────────────────
+    function renderMissionResults(results) {
+        missionResults = results;
+        selectedMissions = {};
+        updateCompareBar();
+
+        const container = document.getElementById("missionResults");
+        if (!results || results.length === 0) {
+            container.innerHTML = "<p>No mission options returned.</p>";
+            return;
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            loadAsteroids(0.05, null);
+        const cards = results.map((r, idx) => {
+            const isTop = r.rank === 1;
+            const profitClass = r.potential_profit_usd >= 0 ? "profit-positive" : "profit-negative";
+            const profitSign  = r.potential_profit_usd >= 0 ? "+" : "";
 
-            document.getElementById("filterBtn").addEventListener("click", () => {
-                const maxDist = document.getElementById("maxDistance").value || "0.05";
-                const minVal  = document.getElementById("minValue").value;
-                loadAsteroids(maxDist, minVal);
-            });
+            return `
+            <div class="mission-card${isTop ? " rank-1" : ""}" id="card-${idx}">
+                <div class="card-header">
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <span class="card-rank${isTop ? " rank-1" : ""}">#${r.rank}</span>
+                        <div>
+                            <div class="card-title">${r.launch_site_name} — ${r.rocket_name}</div>
+                            <small style="opacity:0.7">${r.country || ""}</small>
+                        </div>
+                    </div>
+                    ${isTop ? '<span class="best-badge">Best Option</span>' : ""}
+                </div>
+                <div class="card-metrics">
+                    <div class="metric">
+                        <span class="metric-label">Departure</span>
+                        <span class="metric-value">${r.departure_date}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Arrival</span>
+                        <span class="metric-value">${r.arrival_date}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Flight Time</span>
+                        <span class="metric-value">${r.flight_time_days} days</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label"
+                              title="Total change in velocity needed (departure + arrival burns)">Δv Total</span>
+                        <span class="metric-value">${r.delta_v_total.toFixed(2)} km/s</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Mission Cost</span>
+                        <span class="metric-value">${fmtUSD(r.mission_cost_usd)}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Asteroid Value</span>
+                        <span class="metric-value">${fmtUSD(r.asteroid_value_usd)}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Potential Profit</span>
+                        <span class="metric-value ${profitClass}">${profitSign}${fmtUSD(r.potential_profit_usd)}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">ROI</span>
+                        <span class="metric-value ${profitClass}">${profitSign}${r.roi_percentage}%</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button onclick="viewTrajectory(${idx})" aria-label="View trajectory for mission ${r.rank} on globe">
+                        View Trajectory on Globe
+                    </button>
+                    <label class="card-checkbox-label">
+                        <input type="checkbox" id="cmp-${idx}"
+                               onchange="toggleCompareMission(${idx}, this.checked)"
+                               aria-label="Select mission ${r.rank} for comparison">
+                        Compare
+                    </label>
+                </div>
+            </div>`;
+        }).join("");
+
+        container.innerHTML = cards;
+    }
+
+    // ── Plan mission handler ─────────────────────────────────────────────
+    document.getElementById("planMissionBtn").addEventListener("click", () => {
+        clearError();
+
+        const id  = document.getElementById("selectedAsteroidId").value;
+        const ds  = document.getElementById("depStart").value;
+        const de  = document.getElementById("depEnd").value;
+        const tof = parseInt(document.getElementById("maxTOF").value, 10) || 365;
+
+        if (!id) { showError("Please select an asteroid from the table first."); return; }
+        if (!ds)  { showError("Please enter a departure window start date."); return; }
+        if (!de)  { showError("Please enter a departure window end date."); return; }
+        if (de <= ds) { showError("Departure window end must be after start."); return; }
+
+        document.getElementById("missionResults").innerHTML = "";
+        setLoading(true);
+
+        fetch("/api/plan-mission", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                asteroid_id: id,
+                departure_window_start: ds,
+                departure_window_end: de,
+                max_time_of_flight_days: tof,
+            }),
+        })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+            setLoading(false);
+            if (!ok || data.error) {
+                showError(data.error || "Unknown error from server.");
+                return;
+            }
+            renderMissionResults(data);
+        })
+        .catch(err => {
+            setLoading(false);
+            showError(`Network error: ${err.message}`);
         });
+    });
+
+    document.getElementById("clearMissionBtn").addEventListener("click", () => {
+        document.getElementById("missionResults").innerHTML = "";
+        clearError();
+        missionResults = [];
+        selectedMissions = {};
+        updateCompareBar();
+        clearTrajectory();
+    });
     </script>
 
+    <!-- ── Trajectory Visualization ──────────────────────────────────── -->
     <script>
-        Cesium.Ion.defaultAccessToken = '{{ cesium_token }}';
+    "use strict";
 
-        const viewer = new Cesium.Viewer('globeContainer', {
-            terrain: Cesium.Terrain.fromWorldTerrain(),
-            timeline: false,
-            animation: false,
-            baseLayerPicker: false,
-            homeButton: true,
-            navigationHelpButton: false,
-            fullscreenButton: true
-        });
+    // ── Status helper ────────────────────────────────────────────────────
+    function setTrajectoryStatus(msg, isError) {
+        const el = document.getElementById("trajectoryStatus");
+        if (!el) return;
+        if (!msg) { el.style.display = "none"; return; }
+        el.textContent = msg;
+        el.style.display = "block";
+        el.style.background = isError
+            ? "color-mix(in srgb, var(--pico-del-color,#c0392b) 12%, transparent)"
+            : "color-mix(in srgb, #2ecc71 12%, transparent)";
+        el.style.color = isError ? "var(--pico-del-color,#c0392b)" : "inherit";
+    }
 
-        viewer.camera.setView({
-            destination: Cesium.Cartesian3.fromDegrees(0, 0, 20000000)
+    // ── Clear any drawn trajectory and restore entity colours ────────────
+    function clearTrajectory() {
+        if (trajectoryEntity) {
+            try { viewer.entities.remove(trajectoryEntity); } catch (e) {}
+            trajectoryEntity = null;
+        }
+        // Restore launchpad colours using stored country code
+        Object.values(launchpadEntities).forEach(e => {
+            if (e && e.point && e._padCountry !== undefined) {
+                e.point.color  = padColour(e._padCountry);
+                e.point.pixelSize = 12;
+            }
         });
+        // Restore asteroid colours using stored data
+        Object.values(asteroidEntities).forEach(entry => {
+            if (entry && entry.entity && entry.entity.point && entry.data) {
+                entry.entity.point.color    = asteroidColour(entry.data);
+                entry.entity.point.pixelSize = 18;
+            }
+        });
+    }
+
+    // ── Main trajectory drawing function ─────────────────────────────────
+    function viewTrajectory(resultIdx) {
+        console.log("[trajectory] viewTrajectory called, idx =", resultIdx);
+
+        try {
+            const r = missionResults[resultIdx];
+            if (!r) {
+                setTrajectoryStatus("Mission result not found — try recalculating.", true);
+                return;
+            }
+
+            clearTrajectory();
+            setTrajectoryStatus("");
+
+            const rawPts = r.trajectory_points || [];
+            console.log("[trajectory] raw points:", rawPts.length);
+
+            // Validate: keep only finite, non-degenerate points
+            const pts = rawPts.filter(p =>
+                p && typeof p.x === "number" && typeof p.y === "number" && typeof p.z === "number"
+                && isFinite(p.x) && isFinite(p.y) && isFinite(p.z)
+                && (Math.abs(p.x) + Math.abs(p.y) + Math.abs(p.z)) > 0   // skip pure-zero points
+            );
+            console.log("[trajectory] valid points:", pts.length);
+
+            if (pts.length < 2) {
+                setTrajectoryStatus(
+                    "No trajectory data for this option. " +
+                    "Try a wider date window or select a different mission.",
+                    true
+                );
+                console.warn("[trajectory] Not enough valid points:", rawPts);
+                return;
+            }
+
+            // Convert scaled-geocentric km → Cesium ECEF metres (×1000)
+            const positions = pts.map(p =>
+                new Cesium.Cartesian3(p.x * 1000, p.y * 1000, p.z * 1000)
+            );
+
+            // Profitability colour
+            const prof = r.potential_profit_usd || 0;
+            const arcCss =
+                prof > 0              ? "#27ae60" :   // green
+                prof > -(r.mission_cost_usd || 1) * 0.1 ? "#f39c12" :   // amber
+                                        "#e74c3c";    // red
+            const arcColor = Cesium.Color.fromCssColorString(arcCss);
+
+            // Build material — try PolylineGlow, fall back to solid colour
+            let material;
+            try {
+                material = new Cesium.PolylineGlowMaterialProperty({
+                    glowPower : 0.2,
+                    taperPower: 1.0,
+                    color     : arcColor.withAlpha(0.95),
+                });
+                console.log("[trajectory] Using PolylineGlowMaterialProperty");
+            } catch (matErr) {
+                console.warn("[trajectory] Glow material unavailable, using solid:", matErr);
+                material = arcColor.withAlpha(0.9);
+            }
+
+            // Add polyline entity
+            trajectoryEntity = viewer.entities.add({
+                name: `Trajectory → ${selectedAsteroid ? selectedAsteroid.name : "asteroid"}`,
+                polyline: {
+                    positions   : positions,
+                    width       : 4,
+                    material    : material,
+                    arcType     : Cesium.ArcType.NONE,
+                    clampToGround: false,
+                },
+            });
+            console.log("[trajectory] Entity added successfully");
+
+            // Highlight the relevant launchpad (white, bigger)
+            // Try exact name first, then partial match
+            let padEntity = launchpadEntities[r.launch_site_name];
+            if (!padEntity) {
+                const target = (r.launch_site_name || "").toLowerCase();
+                for (const [k, v] of Object.entries(launchpadEntities)) {
+                    if (target.includes(k.toLowerCase()) || k.toLowerCase().includes(target)) {
+                        padEntity = v; break;
+                    }
+                }
+            }
+            if (padEntity && padEntity.point) {
+                padEntity.point.color    = Cesium.Color.WHITE;
+                padEntity.point.pixelSize = 18;
+            }
+
+            // Highlight target asteroid (gold, bigger)
+            if (selectedAsteroid) {
+                const astEntry = asteroidEntities[selectedAsteroid.id];
+                if (astEntry && astEntry.entity && astEntry.entity.point) {
+                    astEntry.entity.point.color    = Cesium.Color.GOLD;
+                    astEntry.entity.point.pixelSize = 26;
+                }
+            }
+
+            // Fly camera to encompass the full arc
+            try {
+                const bs = Cesium.BoundingSphere.fromPoints(positions);
+                // Ensure the bounding sphere is large enough to be meaningful
+                if (bs.radius < 100_000) bs.radius = 100_000;
+                viewer.camera.flyToBoundingSphere(bs, {
+                    duration: 2.5,
+                    offset  : new Cesium.HeadingPitchRange(
+                        0,
+                        -Cesium.Math.toRadians(25),
+                        bs.radius * 2.5
+                    ),
+                });
+                console.log("[trajectory] Camera flying to bounding sphere, radius =", bs.radius);
+            } catch (camErr) {
+                console.warn("[trajectory] Camera flyTo failed:", camErr);
+                // Fallback: pull back to a view that shows Earth + space
+                viewer.camera.flyTo({
+                    destination: Cesium.Cartesian3.fromDegrees(0, 20, 80_000_000),
+                    duration   : 2,
+                });
+            }
+
+            setTrajectoryStatus(
+                `Trajectory drawn — ${pts.length} waypoints.  ` +
+                `Arc colour: ${prof > 0 ? "green (profitable)" : prof > -(r.mission_cost_usd||1)*0.1 ? "amber (break-even)" : "red (loss)"}`
+            );
+
+        } catch (err) {
+            console.error("[trajectory] Unexpected error:", err);
+            setTrajectoryStatus(`Trajectory error: ${err.message}`, true);
+        }
+    }
     </script>
+
+    <!-- ── Mission Comparison ─────────────────────────────────────────── -->
+    <script>
+    "use strict";
+
+    function toggleCompareMission(idx, checked) {
+        if (checked) {
+            selectedMissions[idx] = missionResults[idx];
+        } else {
+            delete selectedMissions[idx];
+        }
+        updateCompareBar();
+    }
+
+    function updateCompareBar() {
+        const n = Object.keys(selectedMissions).length;
+        const bar = document.getElementById("compareBar");
+        document.getElementById("compareCount").textContent = `${n} mission${n !== 1 ? "s" : ""} selected`;
+        if (n >= 2) {
+            bar.classList.add("visible");
+        } else {
+            bar.classList.remove("visible");
+        }
+    }
+
+    document.getElementById("doCompareBtn").addEventListener("click", () => {
+        const missions = Object.values(selectedMissions);
+        if (missions.length < 2) return;
+        renderComparisonTable(missions);
+        document.getElementById("compareModal").classList.add("open");
+    });
+
+    document.getElementById("closeCompareBtn").addEventListener("click", () => {
+        document.getElementById("compareModal").classList.remove("open");
+    });
+
+    // Close modal on background click
+    document.getElementById("compareModal").addEventListener("click", e => {
+        if (e.target === document.getElementById("compareModal")) {
+            document.getElementById("compareModal").classList.remove("open");
+        }
+    });
+
+    function renderComparisonTable(missions) {
+        // Rows: attribute name → getter function
+        const rows = [
+            ["Launch Site",    m => m.launch_site_name],
+            ["Rocket",         m => m.rocket_name],
+            ["Departure Date", m => m.departure_date],
+            ["Arrival Date",   m => m.arrival_date],
+            ["Flight Time",    m => m.flight_time_days + " days",    (a,b) => a.flight_time_days < b.flight_time_days],
+            ["Δv Required",    m => m.delta_v_total.toFixed(2) + " km/s", (a,b) => a.delta_v_total < b.delta_v_total],
+            ["Mission Cost",   m => fmtUSD(m.mission_cost_usd),      (a,b) => a.mission_cost_usd < b.mission_cost_usd],
+            ["Asteroid Value", m => fmtUSD(m.asteroid_value_usd),    null],
+            ["Potential Profit", m => fmtUSD(m.potential_profit_usd), (a,b) => a.potential_profit_usd > b.potential_profit_usd],
+            ["ROI",            m => m.roi_percentage + "%",           (a,b) => a.roi_percentage > b.roi_percentage],
+        ];
+
+        const header = `<tr><th>Attribute</th>${missions.map(m => `<th>#${m.rank} ${m.rocket_name}</th>`).join("")}</tr>`;
+
+        const bodyRows = rows.map(([label, getter, bestFn]) => {
+            // Find best mission for this row (if comparison function given)
+            let bestIdx = -1;
+            if (bestFn) {
+                bestIdx = 0;
+                for (let i = 1; i < missions.length; i++) {
+                    if (bestFn(missions[i], missions[bestIdx])) bestIdx = i;
+                }
+            }
+            const cells = missions.map((m, i) => {
+                const cls = (bestFn && i === bestIdx) ? " class=\"best-cell\"" : "";
+                return `<td${cls}>${getter(m)}</td>`;
+            }).join("");
+            return `<tr><td><strong>${label}</strong></td>${cells}</tr>`;
+        }).join("");
+
+        document.getElementById("compareTableContainer").innerHTML = `
+            <p style="opacity:0.7;font-size:0.85rem;margin-bottom:0.75rem">
+                Green cells highlight the best value in each row.
+            </p>
+            <div style="overflow-x:auto">
+                <table id="comparisonTable">
+                    <thead>${header}</thead>
+                    <tbody>${bodyRows}</tbody>
+                </table>
+            </div>`;
+    }
+    </script>
+
 </body>
 </html>
