@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 _PLAN_EXECUTOR = ThreadPoolExecutor(max_workers=2)
 PLAN_TIMEOUT_SECONDS = 90   # hard ceiling for mission planning
+_MISSION_CACHE = {}         # simple in-process cache: key → result
 
 from asteroid_data import get_asteroid_data, filter_asteroids
 from launchpad_data import get_launchpad_data
@@ -37,6 +38,7 @@ def asteroids():
     try:
         raw_distance = request.args.get("max_distance", "0.05")
         raw_value = request.args.get("min_value", None)
+        force_refresh = request.args.get("refresh") == "1"
 
         try:
             max_distance = float(raw_distance)
@@ -50,6 +52,15 @@ def asteroids():
             except (ValueError, TypeError):
                 return jsonify({"error": "min_value must be a number"}), 400
 
+        if force_refresh:
+            from asteroid_data import CACHE_FILE, FULL_CACHE_FILE
+            import os
+            for f in (CACHE_FILE, FULL_CACHE_FILE):
+                try:
+                    os.remove(f)
+                except FileNotFoundError:
+                    pass
+
         all_asteroids = get_asteroid_data()
         filtered = filter_asteroids(
             all_asteroids,
@@ -60,6 +71,22 @@ def asteroids():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/data-freshness")
+def data_freshness():
+    """Return timestamp of cached asteroid data."""
+    import os, json
+    from asteroid_data import FULL_CACHE_FILE, CACHE_FILE
+    for f in (FULL_CACHE_FILE, CACHE_FILE):
+        if os.path.exists(f):
+            try:
+                with open(f) as fh:
+                    data = json.load(fh)
+                return jsonify({"timestamp": data.get("timestamp"), "source": f})
+            except Exception:
+                pass
+    return jsonify({"timestamp": None})
 
 
 # ---------------------------------------------------------------------------
@@ -136,6 +163,12 @@ def plan_mission_route():
 
         from mission_planner import plan_mission
 
+        # Check mission cache (same asteroid + dates + tof = same result)
+        cache_key = f"{asteroid_id}|{dep_start_str}|{dep_end_str}|{max_tof}"
+        if cache_key in _MISSION_CACHE:
+            print(f"[plan-mission] Returning cached result for {cache_key}")
+            return jsonify(_MISSION_CACHE[cache_key])
+
         future = _PLAN_EXECUTOR.submit(plan_mission, asteroid_id, dep_start, dep_end, max_tof)
         try:
             result = future.result(timeout=PLAN_TIMEOUT_SECONDS)
@@ -152,6 +185,12 @@ def plan_mission_route():
         if isinstance(result, dict) and "error" in result:
             return jsonify(result), 400
 
+        # Cache successful result (evict oldest if cache grows too large)
+        if len(_MISSION_CACHE) > 50:
+            oldest = next(iter(_MISSION_CACHE))
+            del _MISSION_CACHE[oldest]
+        _MISSION_CACHE[cache_key] = result
+
         return jsonify(result)
 
     except Exception as e:
@@ -159,8 +198,28 @@ def plan_mission_route():
 
 
 # ---------------------------------------------------------------------------
+# Custom error pages
+# ---------------------------------------------------------------------------
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template("error.html", code=404,
+                           title="Page Not Found",
+                           message="The page you're looking for doesn't exist."), 404
+
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template("error.html", code=500,
+                           title="Internal Server Error",
+                           message="Something went wrong on our end. Please try again."), 500
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    port = int(os.getenv("PORT", 8080))
+    app.run(debug=os.getenv("FLASK_DEBUG", "false").lower() == "true",
+            host="0.0.0.0", port=port)

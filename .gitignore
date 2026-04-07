@@ -1,6 +1,11 @@
 venv/
 __pycache__/
+*.pyc
+*.pyo
 .env
 *.db
-asteroid_cache.json
-launchpad_cache.json
+*_cache.json
+.DS_Store
+*.egg-info/
+dist/
+build/

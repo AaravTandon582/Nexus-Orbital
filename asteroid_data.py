@@ -1,3 +1,4 @@
+import math
 import requests
 import json
 import os
@@ -164,20 +165,75 @@ def fetch_orbital_elements(asteroid_id):
 
 def enrich_with_orbits(asteroids):
     """
-    Fetch orbital elements for the 20 closest asteroids (by miss distance).
+    Fetch orbital elements for the 50 closest asteroids (by miss distance).
     Merges orbital data into those asteroids and returns the full list.
+    Asteroids that fail the SBDB lookup get synthetic elements estimated from
+    close-approach data so mission planning still works for them.
     """
     sorted_all = sorted(asteroids, key=lambda a: a["miss_distance_au"])
-    top_20 = sorted_all[:20]
-    rest = sorted_all[20:]
+    top_50 = sorted_all[:50]
+    rest = sorted_all[50:]
 
     enriched = []
-    for asteroid in top_20:
+    for asteroid in top_50:
         orbital = fetch_orbital_elements(asteroid["id"])
-        enriched.append({**asteroid, **orbital})
-        time.sleep(0.5)
+        if orbital and orbital.get("semi_major_axis_au"):
+            enriched.append({**asteroid, **orbital})
+        else:
+            # Synthesise approximate elements from close-approach kinematics
+            synthetic = _synthesise_orbital_elements(asteroid)
+            enriched.append({**asteroid, **synthetic})
+        time.sleep(0.3)
 
     return enriched + rest
+
+
+def _synthesise_orbital_elements(asteroid):
+    """
+    Estimate Keplerian elements for an asteroid using only its close-approach data.
+
+    Assumptions (conservative, typical NEO):
+      - Orbit type: Apollo/Aten (a ≈ miss_distance_au scaled + 1 AU)
+      - Eccentricity derived from close-approach velocity relative to Earth
+      - Inclination: typical low-inclination NEO (5–15°)
+      - Other angles: set to 0 (unknown)
+
+    Returns dict with same keys as fetch_orbital_elements, flagged as approximate.
+    """
+    miss_au = float(asteroid.get("miss_distance_au") or 0.05)
+    vel_km_s = float(asteroid.get("velocity_km_s") or 15.0)
+
+    # Rough semi-major axis: if the asteroid is near Earth (< 0.05 AU),
+    # assume it's an Apollo-class NEO with a ≈ 1.1 – 2.0 AU
+    # Use relative velocity to estimate: v_rel ≈ |v_ast - v_earth|
+    # v_earth ≈ 29.78 km/s; heliocentric vel of asteroid ≈ sqrt(sum of squares)
+    v_earth = 29.78  # km/s
+    v_ast_helio = math.sqrt(v_earth**2 + vel_km_s**2) * 0.92  # empirical scaling
+    AU_TO_KM = 1.495978707e8
+    GM_SUN = 1.32712440018e11  # km³/s²
+
+    # vis-viva: v² = GM*(2/r - 1/a) at r ≈ 1 AU (close approach near Earth)
+    r_km = AU_TO_KM
+    a_km = GM_SUN / (2 * GM_SUN / r_km - v_ast_helio**2)
+    a_au = max(0.7, min(4.0, a_km / AU_TO_KM))  # clamp to sensible range
+
+    # Eccentricity from perihelion ≈ r_min and aphelion ≈ a*(1+e)
+    # Simple estimate: for a typical Apollo NEO e ≈ 0.2–0.6
+    e = max(0.1, min(0.7, abs(a_au - 1.0) / a_au + 0.15))
+
+    # Inclination: use velocity as proxy — higher relative vel → higher inc
+    inc = max(2.0, min(35.0, vel_km_s * 0.8))
+
+    return {
+        "semi_major_axis_au": round(a_au, 4),
+        "eccentricity": round(e, 4),
+        "inclination_deg": round(inc, 2),
+        "longitude_ascending_node_deg": 0.0,
+        "argument_of_perihelion_deg": 0.0,
+        "mean_anomaly_deg": 0.0,
+        "epoch": None,
+        "_orbital_approximate": True,   # flag for mission_planner
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -309,27 +365,51 @@ def _estimate_value_usd(diameter_km):
 def merge_valuations(asteroids, asterank_data):
     """
     Match NASA asteroids to Asterank records using multiple name-key
-    candidates.  Falls back to a diameter-based estimate when no Asterank
-    record is found so the UI always shows a value.
+    candidates plus difflib fuzzy matching as a final fallback.
+    Falls back to a diameter-based estimate when no match found.
     """
+    import difflib
+
+    asterank_keys = list(asterank_data.keys())
+    matched = 0
+
     for asteroid in asteroids:
-        raw_name = asteroid.get("name", "")
+        raw_name   = asteroid.get("name", "")
         candidates = _name_candidates(raw_name)
 
         match = None
+        # 1. Exact key match
         for key in candidates:
             if key in asterank_data:
                 match = asterank_data[key]
                 break
 
+        # 2. Fuzzy match if exact fails
+        if match is None and asterank_keys:
+            for candidate in candidates:
+                close = difflib.get_close_matches(candidate, asterank_keys, n=1, cutoff=0.82)
+                if close:
+                    match = asterank_data[close[0]]
+                    break
+
         if match:
-            asteroid["profit"] = match.get("profit")
-            asteroid["price"] = match.get("price")
+            profit = match.get("profit")
+            price  = match.get("price")
+            # Sanity check — Asterank sometimes returns absurdly large or negative values
+            if price is not None and abs(float(price or 0)) > 1e18:
+                price = None
+            if profit is not None and abs(float(profit or 0)) > 1e18:
+                profit = None
+            asteroid["profit"] = profit
+            asteroid["price"]  = price
+            matched += 1
         else:
-            # No Asterank record — use diameter-based estimate
             estimated = _estimate_value_usd(asteroid.get("diameter_km"))
             asteroid["profit"] = estimated
-            asteroid["price"] = estimated
+            asteroid["price"]  = estimated
+
+    if asteroids:
+        print(f"[asteroid_data] Asterank match rate: {matched}/{len(asteroids)} ({100*matched//len(asteroids)}%)")
     return asteroids
 
 
@@ -398,7 +478,7 @@ def _save_full_cache(data):
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def get_asteroid_data(days_ahead=60, max_distance_au=0.05):
+def get_asteroid_data(days_ahead=365, max_distance_au=0.05):
     """
     Fetch, enrich, and return asteroid data for the next `days_ahead` days.
 

@@ -39,6 +39,37 @@ SCALE_DIVISOR = 100.0               # divide km positions by this for Cesium vis
 
 
 # ---------------------------------------------------------------------------
+# Fallback orbital element synthesis (when SBDB data unavailable)
+# ---------------------------------------------------------------------------
+
+def _synthesise_elements_inline(asteroid):
+    """Return a copy of the asteroid dict with estimated orbital elements."""
+    miss_au = float(asteroid.get("miss_distance_au") or 0.05)
+    vel_km_s = float(asteroid.get("velocity_km_s") or 15.0)
+
+    v_earth = 29.78
+    v_ast_helio = math.sqrt(v_earth**2 + vel_km_s**2) * 0.92
+    r_km = AU_TO_KM
+    raw_a_km = GM_SUN_KM3_S2 / (2.0 * GM_SUN_KM3_S2 / r_km - v_ast_helio**2)
+    a_au = max(0.7, min(4.0, raw_a_km / AU_TO_KM))
+    e = max(0.1, min(0.7, abs(a_au - 1.0) / a_au + 0.15))
+    inc = max(2.0, min(35.0, vel_km_s * 0.8))
+
+    synth = dict(asteroid)
+    synth.update({
+        "semi_major_axis_au": round(a_au, 4),
+        "eccentricity": round(e, 4),
+        "inclination_deg": round(inc, 2),
+        "longitude_ascending_node_deg": 0.0,
+        "argument_of_perihelion_deg": 0.0,
+        "mean_anomaly_deg": 0.0,
+        "epoch": None,
+        "_orbital_approximate": True,
+    })
+    return synth
+
+
+# ---------------------------------------------------------------------------
 # Kepler's equation solver: mean anomaly → true anomaly
 # ---------------------------------------------------------------------------
 
@@ -678,27 +709,68 @@ def plan_mission(asteroid_id, departure_window_start, departure_window_end,
     Returns list of up to 5 ranked mission options (sorted by profit desc),
     or a dict with an "error" key on failure.
     """
+    from datetime import date as _date
+
     # Locate asteroid
-    all_asteroids = get_asteroid_data()
+    try:
+        all_asteroids = get_asteroid_data()
+    except Exception as e:
+        return {"error": f"Failed to load asteroid database: {e}"}
+
+    if not all_asteroids:
+        return {"error": "Asteroid database is empty — try refreshing data."}
+
     asteroid = next(
         (a for a in all_asteroids if str(a.get("id")) == str(asteroid_id)),
         None
     )
 
     if asteroid is None:
-        return {"error": f"Asteroid ID {asteroid_id} not found in current dataset."}
+        return {"error": f"Asteroid ID {asteroid_id} not found. Try refreshing the page."}
+
+    is_approximate = bool(asteroid.get("_orbital_approximate"))
 
     if not asteroid.get("semi_major_axis_au"):
-        return {
-            "error": (
-                f"No orbital elements available for '{asteroid.get('name')}'. "
-                "Only enriched asteroids (top 20 by proximity) support mission planning."
-            )
-        }
+        # Synthesise fallback orbital elements from close-approach kinematics
+        asteroid = _synthesise_elements_inline(asteroid)
+        is_approximate = True
+        print(f"[mission_planner] Synthesised orbital elements for {asteroid.get('name')}")
+
+    # Validate orbital elements are physically reasonable
+    try:
+        a_au = float(asteroid["semi_major_axis_au"])
+        ecc  = float(asteroid.get("eccentricity") or 0)
+        if a_au <= 0:
+            # Last-resort: use 1.3 AU typical NEO
+            asteroid["semi_major_axis_au"] = 1.3
+            asteroid["eccentricity"] = 0.3
+            a_au, ecc = 1.3, 0.3
+            is_approximate = True
+        if ecc >= 1.0:
+            # Clamp to near-parabolic
+            asteroid["eccentricity"] = 0.95
+            ecc = 0.95
+            is_approximate = True
+    except (ValueError, TypeError):
+        asteroid["semi_major_axis_au"] = 1.3
+        asteroid["eccentricity"] = 0.3
+        is_approximate = True
 
     # Validate dates
+    today = _date.today()
+    if departure_window_start < today:
+        departure_window_start = today  # silently clamp to today
     if departure_window_end <= departure_window_start:
-        return {"error": "Departure window end must be after start."}
+        return {"error": "Departure window end must be after start (and after today)."}
+
+    window_days = (departure_window_end - departure_window_start).days
+    if window_days < 7:
+        return {"error": "Departure window must be at least 7 days wide for a meaningful scan."}
+
+    if max_time_of_flight_days < 30:
+        return {"error": "Max flight time must be at least 30 days."}
+    if max_time_of_flight_days > 1825:
+        max_time_of_flight_days = 1825  # cap at 5 years
 
     # Find optimal window
     print(f"[mission_planner] Starting mission plan for {asteroid.get('name')} ...")
@@ -711,12 +783,21 @@ def plan_mission(asteroid_id, departure_window_start, departure_window_end,
     )
 
     if window is None:
-        return {
-            "error": (
-                "No valid transfer orbit found. Try widening the date range "
-                "or increasing maximum flight time."
-            )
+        # Last-resort: estimate delta-v from close-approach velocity
+        vel_km_s = float(asteroid.get("velocity_km_s") or 12.0)
+        rough_dv = vel_km_s * 0.55 + 3.5   # empirical: ~half relative vel + escape margin
+        rough_tof = max(120, min(max_time_of_flight_days, 200))
+        best_dep = departure_window_start
+        best_arr = departure_window_start + timedelta(days=rough_tof)
+        window = {
+            "best_departure_date": best_dep,
+            "best_arrival_date": best_arr,
+            "best_time_of_flight_days": rough_tof,
+            "minimum_delta_v": rough_dv,
+            "transfer_result": {"trajectory_points": []},
         }
+        is_approximate = True
+        print(f"[mission_planner] Using last-resort delta-v estimate ({rough_dv:.2f} km/s) for {asteroid.get('name')}")
 
     best_dep = window["best_departure_date"]
     best_arr = window["best_arrival_date"]
@@ -729,7 +810,13 @@ def plan_mission(asteroid_id, departure_window_start, departure_window_end,
     rockets = match_rockets_to_mission(best_dv, launchpads)
 
     if not rockets:
-        return {"error": f"No rocket capable of Δv = {best_dv:.1f} km/s found in database."}
+        return {
+            "error": (
+                f"No rocket in database can achieve the required Δv = {best_dv:.1f} km/s. "
+                "This asteroid may be too distant or in a high-inclination orbit. "
+                "Try a different departure window."
+            )
+        }
 
     # Asteroid value
     asteroid_value = float(asteroid.get("price") or asteroid.get("profit") or 0)
@@ -761,9 +848,18 @@ def plan_mission(asteroid_id, departure_window_start, departure_window_end,
                 "trajectory_points": traj_pts,
                 "launch_lat": opt.get("latitude"),
                 "launch_lon": opt.get("longitude"),
+                "is_approximate": is_approximate,
             })
         except Exception as e:
             print(f"[mission_planner] Result build error for {opt['rocket_name']}: {e}")
+
+    if not results:
+        return {
+            "error": (
+                "All rocket options failed to compute mission cost. "
+                "This is an internal error — please try again."
+            )
+        }
 
     results.sort(key=lambda r: r["potential_profit_usd"], reverse=True)
     top5 = results[:5]
