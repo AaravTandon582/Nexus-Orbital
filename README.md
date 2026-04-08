@@ -1,9 +1,9 @@
 # NEXUS ORBITAL
 ### Asteroid Mining Mission Intelligence
 
-> The intersection of Earth and space resources — real NASA data, orbital mechanics, and mission planning in your browser.
+> The intersection of Earth and space resources using real NASA data, orbital mechanics, and mission planning in your browser.
 
-A premium web platform for tracking near-Earth asteroids, estimating their mining value, and computing optimal spacecraft trajectories — all visualized on a live 3D globe.
+A premium web platform for tracking near-Earth asteroids, estimating their mining value, and computing optimal spacecraft trajectories, all of which is visualized on a live 3D globe.
 
 ---
 
