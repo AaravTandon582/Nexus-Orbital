@@ -6,24 +6,24 @@
     <title>NEXUS ORBITAL | Asteroid Mining Mission Intelligence</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
     /* ── DESIGN TOKENS ─────────────────────────────────── */
     :root {
-        --bg:#050a0e;--bg2:#0d1117;--bg3:#111827;
-        --card:rgba(13,17,23,0.88);
-        --accent:#00d4ff;--accent2:#7c3aed;
-        --success:#10b981;--danger:#ef4444;--gold:#fbbf24;
-        --text:#f9fafb;--text2:#9ca3af;
-        --border:rgba(255,255,255,0.08);--border-a:rgba(0,212,255,0.18);
-        --glow:0 0 20px rgba(0,212,255,0.25);
-        --glow-sm:0 0 10px rgba(0,212,255,0.18);
-        --shadow:0 8px 32px rgba(0,0,0,0.55);
-        --radius:14px;--radius-sm:8px;
+        --bg:#0a0a0a;--bg2:#111111;--bg3:#1a1a1a;
+        --card:rgba(17,17,17,0.98);
+        --accent:#e8e8e8;--accent2:#444444;
+        --success:#22c55e;--danger:#ef4444;--gold:#c8890a;
+        --text:#f0f0f0;--text2:#777777;
+        --border:rgba(255,255,255,0.1);--border-a:rgba(255,255,255,0.18);
+        --glow:none;--glow-sm:none;
+        --shadow:0 4px 20px rgba(0,0,0,0.8);
+        --radius:3px;--radius-sm:2px;
         --ease:cubic-bezier(0.4,0,0.2,1);
-        --font:'Inter',-apple-system,sans-serif;
+        --font:'Space Grotesk',-apple-system,sans-serif;
+        --mono:'Space Mono',monospace;
         --globe-w:62%;
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -38,10 +38,10 @@
     /* ── SPLASH ─────────────────────────────────────────── */
     #splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity 0.6s ease,visibility 0.6s}
     #splash.hidden{opacity:0;visibility:hidden;pointer-events:none}
-    .splash-logo{font-size:36px;font-weight:800;letter-spacing:-0.02em;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:pulse-opacity 1.5s ease-in-out infinite}
-    .splash-tagline{color:var(--text2);font-size:13px;letter-spacing:0.12em;text-transform:uppercase}
-    .splash-bar{width:220px;height:2px;background:var(--border);border-radius:2px;overflow:hidden}
-    .splash-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;animation:splash-load 1.8s var(--ease) forwards}
+    .splash-logo{font-size:36px;font-weight:600;letter-spacing:0.08em;color:var(--text);animation:pulse-opacity 1.5s ease-in-out infinite}
+    .splash-tagline{color:var(--text2);font-size:11px;letter-spacing:0.16em;text-transform:uppercase}
+    .splash-bar{width:220px;height:1px;background:var(--border);overflow:hidden}
+    .splash-bar-fill{height:100%;background:var(--text);animation:splash-load 1.8s var(--ease) forwards}
     @keyframes splash-load{from{width:0}to{width:100%}}
     @keyframes pulse-opacity{0%,100%{opacity:1}50%{opacity:0.6}}
 
@@ -49,29 +49,29 @@
     #app{display:flex;flex-direction:column;height:100vh}
 
     /* ── HEADER ─────────────────────────────────────────── */
-    #hdr{height:64px;flex-shrink:0;background:linear-gradient(90deg,#080e14,#0a1018);border-bottom:1px solid var(--border-a);display:flex;align-items:center;padding:0 16px;gap:14px;position:relative;z-index:100;box-shadow:0 2px 24px rgba(0,0,0,0.5)}
+    #hdr{height:56px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:14px;position:relative;z-index:100}
     .hdr-logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
-    .hdr-logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:var(--glow-sm)}
-    .hdr-logo-text{font-size:18px;font-weight:800;letter-spacing:-0.01em;background:linear-gradient(135deg,var(--accent),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .hdr-tagline{font-size:10px;color:var(--text2);letter-spacing:0.1em;text-transform:uppercase;margin-top:-4px}
+    .hdr-logo-icon{width:28px;height:28px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px}
+    .hdr-logo-text{font-size:16px;font-weight:600;letter-spacing:0.06em;color:var(--text)}
+    .hdr-tagline{font-size:9px;color:var(--text2);letter-spacing:0.12em;text-transform:uppercase;margin-top:-3px}
     .hdr-divider{width:1px;height:32px;background:var(--border);flex-shrink:0}
     .hdr-stats{display:flex;gap:16px;flex:1;min-width:0}
     .hdr-stat{display:flex;flex-direction:column}
-    .hdr-stat-val{font-size:16px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+    .hdr-stat-val{font-size:16px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;font-family:var(--mono)}
     .hdr-stat-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em}
     .hdr-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
     .hdr-btn{background:transparent;border:1px solid var(--border);color:var(--text2);padding:6px 10px;border-radius:var(--radius-sm);font-family:var(--font);font-size:11px;font-weight:500;cursor:pointer;transition:all 0.2s var(--ease);display:flex;align-items:center;gap:5px;white-space:nowrap}
-    .hdr-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,212,255,0.06)}
-    .hdr-btn.accent-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none}
-    .hdr-btn.accent-btn:hover{box-shadow:0 4px 14px rgba(0,212,255,0.3);transform:translateY(-1px)}
+    .hdr-btn:hover{border-color:rgba(255,255,255,0.3);color:var(--text);background:rgba(255,255,255,0.05)}
+    .hdr-btn.accent-btn{background:var(--text);color:#0a0a0a;border:none;font-weight:600}
+    .hdr-btn.accent-btn:hover{background:#fff}
     .freshness-dot{width:6px;height:6px;border-radius:50%;background:var(--success);animation:blink 2s ease-in-out infinite}
     @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
 
     /* ── LAYOUT PRESETS BAR ─────────────────────────────── */
     .layout-presets{display:flex;gap:3px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:3px}
-    .preset-btn{background:none;border:none;color:var(--text2);cursor:pointer;padding:3px 6px;border-radius:4px;font-size:10px;font-family:var(--font);transition:all 0.15s;white-space:nowrap}
-    .preset-btn:hover{background:rgba(0,212,255,0.1);color:var(--accent)}
-    .preset-btn.active{background:rgba(0,212,255,0.15);color:var(--accent)}
+    .preset-btn{background:none;border:none;color:var(--text2);cursor:pointer;padding:3px 6px;border-radius:2px;font-size:10px;font-family:var(--font);transition:all 0.15s;white-space:nowrap}
+    .preset-btn:hover{background:rgba(255,255,255,0.08);color:var(--text)}
+    .preset-btn.active{background:rgba(255,255,255,0.12);color:var(--text)}
 
     /* ── MAIN ────────────────────────────────────────────── */
     #main{flex:1;display:flex;overflow:hidden;min-height:0;position:relative}
@@ -79,25 +79,25 @@
     /* ── GLOBE PANE ─────────────────────────────────────── */
     #globe-pane{flex:0 0 var(--globe-w);position:relative;background:var(--bg);transition:flex-basis 0.3s var(--ease);min-width:0}
     #spacekit-container{position:absolute;inset:0;background:#000}
-    #traj-info{position:absolute;top:80px;left:16px;z-index:20;background:var(--card);backdrop-filter:blur(24px);border:1px solid var(--border-a);border-radius:var(--radius);padding:16px 20px;min-width:260px;max-width:300px;box-shadow:var(--shadow);display:none;animation:slide-in-left 0.3s var(--ease)}
+    #traj-info{position:absolute;top:80px;left:16px;z-index:20;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px 20px;min-width:260px;max-width:300px;box-shadow:var(--shadow);display:none;animation:slide-in-left 0.3s var(--ease)}
     #traj-info.visible{display:block}
     .traj-info-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
-    .traj-info-title{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);font-weight:600}
+    .traj-info-title{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text2);font-weight:600}
     .traj-info-close{background:none;border:none;color:var(--text2);cursor:pointer;font-size:16px;line-height:1;padding:0;transition:color 0.15s}
     .traj-info-close:hover{color:var(--text)}
     .traj-rows{display:flex;flex-direction:column;gap:6px}
     .traj-row{display:flex;justify-content:space-between;font-size:12px}
     .traj-row-label{color:var(--text2)}
     .traj-row-val{font-weight:600;font-variant-numeric:tabular-nums}
-    #globe-status{position:absolute;bottom:16px;left:16px;z-index:20;background:var(--card);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;font-size:12px;color:var(--text2);display:none}
+    #globe-status{position:absolute;bottom:16px;left:16px;z-index:20;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;font-size:12px;color:var(--text2);display:none}
     #globe-status.visible{display:block}
 
     /* ── DIVIDER ─────────────────────────────────────────── */
     #divider{width:6px;flex-shrink:0;background:var(--border);cursor:col-resize;position:relative;z-index:50;transition:background 0.2s;display:flex;align-items:center;justify-content:center}
-    #divider:hover{background:rgba(0,212,255,0.3)}
-    #divider.dragging{background:rgba(0,212,255,0.5)}
+    #divider:hover{background:rgba(255,255,255,0.2)}
+    #divider.dragging{background:rgba(255,255,255,0.3)}
     #divider::after{content:'⋮';color:var(--text2);font-size:14px;letter-spacing:-2px;pointer-events:none}
-    #divider-tooltip{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg3);border:1px solid var(--border-a);color:var(--text2);font-size:10px;padding:4px 8px;border-radius:4px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.2s;z-index:60;font-family:var(--font)}
+    #divider-tooltip{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:10px;padding:4px 8px;border-radius:2px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.2s;z-index:60;font-family:var(--font)}
     #divider:hover #divider-tooltip{opacity:1}
 
     /* ── SIDE PANEL ──────────────────────────────────────── */
@@ -106,7 +106,7 @@
     .panel-section:last-child{border-bottom:none}
     .section-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
     .section-title{font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text2)}
-    .count-badge{background:rgba(0,212,255,0.12);color:var(--accent);border:1px solid rgba(0,212,255,0.2);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;font-variant-numeric:tabular-nums}
+    .count-badge{background:rgba(255,255,255,0.07);color:var(--text2);border:1px solid var(--border);font-size:10px;font-weight:600;padding:2px 8px;border-radius:2px;font-variant-numeric:tabular-nums;font-family:var(--mono)}
     .section-header-actions{margin-left:auto;display:flex;gap:6px}
 
     /* ── FILTER BAR ──────────────────────────────────────── */
@@ -115,63 +115,63 @@
     .search-icon{position:absolute;left:10px;color:var(--text2);pointer-events:none;width:14px;height:14px}
     .search-input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:13px;padding:8px 10px 8px 32px;border-radius:var(--radius-sm);outline:none;transition:all 0.2s var(--ease)}
     .search-input::placeholder{color:var(--text2)}
-    .search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,0.1)}
+    .search-input:focus{border-color:rgba(255,255,255,0.3);box-shadow:none}
     .filter-row{display:flex;gap:8px;align-items:flex-end}
     .filter-field{display:flex;flex-direction:column;gap:4px;flex:1}
     .filter-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em}
     .filter-input-wrap{position:relative;display:flex;align-items:center}
     .filter-input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:13px;padding:7px 32px 7px 10px;border-radius:var(--radius-sm);outline:none;transition:all 0.2s var(--ease)}
     .filter-input::placeholder{color:var(--text2)}
-    .filter-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,0.1)}
+    .filter-input:focus{border-color:rgba(255,255,255,0.3);box-shadow:none}
     .filter-unit{position:absolute;right:8px;font-size:10px;color:var(--text2);font-weight:600;pointer-events:none}
     #dataFreshness{font-size:11px;color:var(--text2);margin-bottom:6px}
 
     /* ── BUTTONS ─────────────────────────────────────────── */
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:var(--font);font-weight:600;font-size:12px;letter-spacing:0.04em;cursor:pointer;border:none;border-radius:var(--radius-sm);padding:8px 16px;transition:all 0.2s var(--ease);white-space:nowrap;text-transform:uppercase}
     .btn:active{transform:scale(0.97)}
-    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 14px rgba(0,212,255,0.25)}
-    .btn-primary:hover{box-shadow:0 6px 20px rgba(0,212,255,0.4);transform:translateY(-1px)}
+    .btn-primary{background:var(--text);color:#0a0a0a;font-weight:600}
+    .btn-primary:hover{background:#fff}
     .btn-secondary{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
-    .btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+    .btn-secondary:hover{border-color:rgba(255,255,255,0.3);color:var(--text)}
     .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
-    .btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.2)}
+    .btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.25)}
     .btn-danger{background:rgba(239,68,68,0.12);color:var(--danger);border:1px solid rgba(239,68,68,0.25)}
     .btn-danger:hover{background:rgba(239,68,68,0.2)}
     .btn-sm{padding:5px 10px;font-size:11px}
     .btn-icon{padding:7px 8px}
     .btn-full{width:100%}
     .btn[disabled]{opacity:0.45;cursor:not-allowed;pointer-events:none}
-    .plan-btn{width:100%;padding:14px 24px;font-size:13px;letter-spacing:0.06em;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:var(--radius);font-family:var(--font);font-weight:700;cursor:pointer;box-shadow:0 4px 24px rgba(0,212,255,0.3);transition:all 0.25s var(--ease);display:flex;align-items:center;justify-content:center;gap:8px;text-transform:uppercase}
-    .plan-btn:hover:not([disabled]){box-shadow:0 6px 32px rgba(0,212,255,0.5);transform:translateY(-2px)}
+    .plan-btn{width:100%;padding:12px 24px;font-size:12px;letter-spacing:0.08em;background:var(--text);color:#0a0a0a;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-weight:600;cursor:pointer;transition:all 0.2s var(--ease);display:flex;align-items:center;justify-content:center;gap:8px;text-transform:uppercase}
+    .plan-btn:hover:not([disabled]){background:#fff}
     .plan-btn[disabled]{opacity:0.5;cursor:not-allowed;transform:none}
 
     /* ── ASTEROID TABLE ──────────────────────────────────── */
     .table-container{overflow-x:auto;margin:0 -20px;padding:0 20px}
     .neo-table{width:100%;border-collapse:collapse;font-size:12px}
     .neo-table th{padding:6px 8px;text-align:left;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;background:var(--bg);position:sticky;top:0;z-index:1;cursor:pointer;white-space:nowrap;user-select:none;border-bottom:1px solid var(--border);transition:color 0.15s}
-    .neo-table th:hover{color:var(--accent)}
-    .neo-table th.sort-active{color:var(--accent)}
+    .neo-table th:hover{color:var(--text)}
+    .neo-table th.sort-active{color:var(--text)}
     .neo-table th .sort-arrow{display:inline-block;margin-left:4px;opacity:0.5}
     .neo-table th.sort-active .sort-arrow{opacity:1}
     .neo-table td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,0.04);font-variant-numeric:tabular-nums;vertical-align:middle;white-space:nowrap;color:var(--text)}
     .neo-table tbody tr{cursor:pointer;transition:all 0.18s var(--ease)}
-    .neo-table tbody tr:hover{background:rgba(0,212,255,0.04);transform:translateX(2px)}
-    .neo-table tbody tr.selected{background:rgba(0,212,255,0.08);box-shadow:inset 2px 0 0 var(--accent)}
+    .neo-table tbody tr:hover{background:rgba(255,255,255,0.03)}
+    .neo-table tbody tr.selected{background:rgba(255,255,255,0.06);box-shadow:inset 2px 0 0 var(--text)}
     .neo-table .val-cell{text-align:right}
     .val-high{color:#34d399;font-weight:600}
-    .val-mid{color:var(--accent);font-weight:500}
+    .val-mid{color:var(--text);font-weight:500}
     .val-low{color:var(--text2)}
     .haz-yes{display:inline-flex;align-items:center;gap:4px;color:var(--danger);font-weight:600;font-size:11px}
     .orbit-yes{color:var(--success)}
     .orbit-no{color:var(--text2)}
     .dist-bar{display:flex;align-items:center;gap:6px}
     .dist-bar-track{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
-    .dist-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--success),var(--accent))}
+    .dist-bar-fill{height:100%;border-radius:2px;background:rgba(255,255,255,0.4)}
     .table-footer{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:11px;color:var(--text2)}
     .pagination{display:flex;gap:4px;align-items:center}
     .page-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:11px;padding:3px 8px;border-radius:4px;cursor:pointer;transition:all 0.15s;font-family:var(--font)}
-    .page-btn:hover{border-color:var(--accent);color:var(--accent)}
-    .page-btn.active{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+    .page-btn:hover{border-color:rgba(255,255,255,0.3);color:var(--text)}
+    .page-btn.active{background:var(--text);color:#0a0a0a;border-color:var(--text);font-weight:600}
     .page-btn[disabled]{opacity:0.3;cursor:default}
     .skeleton{background:linear-gradient(90deg,var(--bg3) 25%,rgba(255,255,255,0.04) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px}
     @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
@@ -179,26 +179,26 @@
     .skeleton-cell{height:12px}
 
     /* ── MISSION FORM ─────────────────────────────────────── */
-    .selected-asteroid-card{background:rgba(0,212,255,0.06);border:1px solid var(--border-a);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;animation:glow-pulse 3s ease-in-out infinite}
+    .selected-asteroid-card{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px}
     .selected-asteroid-card.empty{border-color:var(--border);background:var(--bg3);animation:none}
     .sel-ast-prompt{color:var(--text2);font-size:12px;font-style:italic}
-    .sel-ast-name{font-size:15px;font-weight:700;color:var(--accent)}
+    .sel-ast-name{font-size:15px;font-weight:600;color:var(--text)}
     .sel-ast-meta{font-size:11px;color:var(--text2);margin-top:2px}
     .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
     .form-field-block{display:flex;flex-direction:column;gap:4px}
     .form-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-weight:600}
     .form-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:13px;padding:7px 10px;border-radius:var(--radius-sm);outline:none;transition:all 0.2s var(--ease);width:100%}
-    .form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,0.1)}
+    .form-input:focus{border-color:rgba(255,255,255,0.3);box-shadow:none}
     .form-input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7)}
     .form-actions{display:flex;gap:8px;align-items:center;margin-bottom:12px}
     .mission-loading{display:none;align-items:center;gap:12px;padding:12px 0;font-size:12px;color:var(--text2)}
     .mission-loading.visible{display:flex}
-    .spinner{width:20px;height:20px;flex-shrink:0;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite}
+    .spinner{width:20px;height:20px;flex-shrink:0;border:2px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin 0.7s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
     .mission-load-text{flex:1}
     .mission-load-stage{font-weight:600;color:var(--text);font-size:12px}
     .mission-load-bar{height:2px;background:var(--border);border-radius:1px;margin-top:4px;overflow:hidden}
-    .mission-load-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:1px;transition:width 0.5s var(--ease)}
+    .mission-load-fill{height:100%;background:var(--text);border-radius:1px;transition:width 0.5s var(--ease)}
     .mission-error{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:#fca5a5;margin-bottom:12px;display:none}
     .mission-error.visible{display:block}
     #trajectoryStatus{border-radius:var(--radius-sm);padding:8px 14px;font-size:12px;display:none;margin-bottom:10px}
@@ -208,16 +208,13 @@
 
     /* ── MISSION CARDS ────────────────────────────────────── */
     #missionResults{display:flex;flex-direction:column;gap:14px;margin-top:4px}
-    .mission-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:all 0.25s var(--ease);position:relative;overflow:hidden}
-    .mission-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity 0.25s}
-    .mission-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.4);border-color:var(--border-a)}
-    .mission-card:hover::before{opacity:0.5}
-    .mission-card.rank-1{border-color:rgba(251,191,36,0.3);background:linear-gradient(135deg,rgba(251,191,36,0.06),var(--bg3) 60%)}
-    .mission-card.rank-1::before{background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0.6}
-    .mission-card.rank-2{border-color:rgba(209,213,219,0.15)}
-    .mission-card.rank-3{border-color:rgba(245,158,11,0.15)}
+    .mission-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:18px;transition:border-color 0.2s var(--ease);position:relative;overflow:hidden}
+    .mission-card:hover{border-color:rgba(255,255,255,0.2)}
+    .mission-card.rank-1{border-color:rgba(200,137,10,0.35)}
+    .mission-card.rank-2{border-color:rgba(255,255,255,0.12)}
+    .mission-card.rank-3{border-color:rgba(255,255,255,0.08)}
     .card-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
-    .rank-badge{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;line-height:1;position:relative}
+    .rank-badge{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;line-height:1;position:relative}
     .rank-badge.r1{background:rgba(251,191,36,0.15);color:var(--gold);border:1px solid rgba(251,191,36,0.3)}
     .rank-badge.r2{background:rgba(209,213,219,0.08);color:#d1d5db;border:1px solid rgba(209,213,219,0.2)}
     .rank-badge.r3{background:rgba(245,158,11,0.08);color:#f59e0b;border:1px solid rgba(245,158,11,0.2)}
@@ -225,51 +222,51 @@
     .rank-badge.r1::after{content:'★';position:absolute;top:-2px;right:-2px;font-size:10px;color:var(--gold)}
     .card-title-block{flex:1;min-width:0}
     .card-site{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .card-rocket{font-size:12px;color:var(--accent);margin-top:1px}
+    .card-rocket{font-size:12px;color:var(--text2);margin-top:1px}
     .card-dates{font-size:11px;color:var(--text2);margin-top:2px}
-    .best-badge{background:linear-gradient(135deg,var(--gold),#f59e0b);color:#000;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:0.08em;flex-shrink:0;align-self:flex-start;margin-top:2px}
+    .best-badge{background:var(--gold);color:#000;font-size:9px;font-weight:700;padding:2px 8px;border-radius:2px;text-transform:uppercase;letter-spacing:0.08em;flex-shrink:0;align-self:flex-start;margin-top:2px}
     .card-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
     .metric-item{display:flex;flex-direction:column;gap:2px}
     .metric-label{font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text2);font-weight:600}
     .metric-value{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text)}
-    .metric-value.accent{color:var(--accent)}
+    .metric-value.accent{color:var(--text)}
     .metric-value.success{color:var(--success)}
     .metric-value.danger{color:var(--danger)}
     .metric-value.gold{color:var(--gold)}
     .profit-hero{background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
     .profit-hero-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.1em}
-    .profit-hero-val{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+    .profit-hero-val{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
     .profit-hero-roi{font-size:12px;font-weight:600;margin-top:1px}
     .profit-hero-val.pos{color:var(--success)}
     .profit-hero-val.neg{color:var(--danger)}
     .profit-pos{color:var(--success)}
     .profit-neg{color:var(--danger)}
     .card-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .traj-btn{flex:1;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:var(--radius-sm);padding:8px 14px;font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all 0.2s var(--ease);display:flex;align-items:center;justify-content:center;gap:6px}
-    .traj-btn:hover{box-shadow:0 4px 16px rgba(0,212,255,0.4);transform:translateY(-1px)}
-    .select-mission-btn{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--success);padding:8px 14px;border-radius:var(--radius-sm);font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;white-space:nowrap}
-    .select-mission-btn:hover{background:rgba(16,185,129,0.2);border-color:var(--success);transform:translateY(-1px)}
+    .traj-btn{flex:1;background:var(--text);color:#0a0a0a;border:none;border-radius:var(--radius-sm);padding:8px 14px;font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:background 0.2s var(--ease);display:flex;align-items:center;justify-content:center;gap:6px}
+    .traj-btn:hover{background:#fff}
+    .select-mission-btn{background:transparent;border:1px solid var(--border);color:var(--text2);padding:8px 14px;border-radius:var(--radius-sm);font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+    .select-mission-btn:hover{border-color:rgba(255,255,255,0.3);color:var(--text)}
     .cmp-label{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);cursor:pointer;flex-shrink:0}
     .cmp-label input[type="checkbox"]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
 
     /* ── COMPARE BAR ─────────────────────────────────────── */
-    #compareBar{position:fixed;bottom:-80px;left:0;right:0;z-index:500;background:linear-gradient(135deg,var(--accent),var(--accent2));padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 -4px 24px rgba(0,0,0,0.5);transition:bottom 0.35s var(--ease)}
+    #compareBar{position:fixed;bottom:-80px;left:0;right:0;z-index:500;background:var(--bg2);border-top:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 -4px 24px rgba(0,0,0,0.8);transition:bottom 0.35s var(--ease)}
     #compareBar.visible{bottom:0}
-    .compare-bar-text{font-size:13px;font-weight:700;color:#fff}
-    .compare-bar-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:8px 20px;border-radius:var(--radius-sm);font-family:var(--font);font-weight:700;font-size:12px;cursor:pointer;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.05em}
-    .compare-bar-btn:hover{background:rgba(255,255,255,0.25)}
+    .compare-bar-text{font-size:13px;font-weight:600;color:var(--text)}
+    .compare-bar-btn{background:var(--text);border:none;color:#0a0a0a;padding:8px 20px;border-radius:var(--radius-sm);font-family:var(--font);font-weight:600;font-size:12px;cursor:pointer;transition:background 0.2s;text-transform:uppercase;letter-spacing:0.05em}
+    .compare-bar-btn:hover{background:#fff}
 
     /* ── MODALS ──────────────────────────────────────────── */
-    .modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(5,10,14,0.85);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity 0.25s var(--ease),visibility 0.25s}
+    .modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity 0.25s var(--ease),visibility 0.25s}
     .modal-overlay.open{opacity:1;visibility:visible}
-    .modal-box{background:var(--bg2);border:1px solid var(--border-a);border-radius:20px;padding:0;max-width:95vw;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(0,212,255,0.08) inset;transform:scale(0.96);transition:transform 0.25s var(--ease)}
+    .modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0;max-width:95vw;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.8);transform:scale(0.97);transition:transform 0.2s var(--ease)}
     .modal-overlay.open .modal-box{transform:scale(1)}
-    .modal-header{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--border);background:rgba(0,212,255,0.04);flex-shrink:0}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--border);background:var(--bg3);flex-shrink:0}
     .modal-title{font-size:16px;font-weight:700;letter-spacing:-0.01em}
     .modal-close{background:var(--bg3);border:1px solid var(--border);color:var(--text2);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all 0.2s}
     .modal-close:hover{background:var(--danger);border-color:var(--danger);color:#fff}
     .modal-body{padding:24px;overflow-y:auto;flex:1}
-    .modal-body h4{font-size:12px;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);margin:16px 0 8px}
+    .modal-body h4{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text);margin:16px 0 8px}
     .modal-body h4:first-child{margin-top:0}
     .modal-body p{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:8px}
     .modal-body ol,.modal-body ul{padding-left:20px}
@@ -281,7 +278,7 @@
     .modal-body th{color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:0.08em}
     .best-cell{background:rgba(16,185,129,0.1)!important;color:var(--success);font-weight:700}
     .shortcuts-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 16px}
-    .kbd{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-family:monospace;font-size:11px;color:var(--accent);white-space:nowrap}
+    .kbd{background:var(--bg3);border:1px solid var(--border);border-radius:2px;padding:2px 8px;font-family:var(--mono);font-size:11px;color:var(--text);white-space:nowrap}
     .shortcut-desc{font-size:12px;color:var(--text2);align-self:center}
     .disclaimer{background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.2);border-radius:var(--radius-sm);padding:10px 14px;font-size:11px;color:#fcd34d;margin-top:12px}
     .cmp-table{min-width:400px}
@@ -294,13 +291,13 @@
     .confirm-field{display:flex;flex-direction:column;gap:4px}
     .confirm-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;font-weight:600}
     .confirm-value{font-size:14px;font-weight:600;color:var(--text)}
-    .confirm-value.big{font-size:24px;font-weight:800}
+    .confirm-value.big{font-size:24px;font-weight:700}
     .confirm-value.green{color:var(--success)}
     .confirm-value.red{color:var(--danger)}
     .confirm-warning{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:var(--radius-sm);padding:12px 16px;font-size:12px;color:#fcd34d;margin:16px 0;display:flex;align-items:center;gap:10px}
     .confirm-actions{display:flex;gap:12px;margin-top:20px}
-    .confirm-proceed-btn{flex:1;padding:14px 24px;font-size:14px;font-weight:800;letter-spacing:0.06em;background:linear-gradient(135deg,var(--success),#059669);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font);cursor:pointer;transition:all 0.25s;text-transform:uppercase;box-shadow:0 4px 20px rgba(16,185,129,0.3)}
-    .confirm-proceed-btn:hover{box-shadow:0 6px 30px rgba(16,185,129,0.5);transform:translateY(-2px)}
+    .confirm-proceed-btn{flex:1;padding:14px 24px;font-size:13px;font-weight:600;letter-spacing:0.06em;background:var(--success);color:#fff;border:none;border-radius:var(--radius-sm);font-family:var(--font);cursor:pointer;transition:opacity 0.2s;text-transform:uppercase}
+    .confirm-proceed-btn:hover{opacity:0.85}
     .confirm-cancel-btn{padding:14px 24px;font-size:13px;font-weight:700;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius);font-family:var(--font);cursor:pointer;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.04em}
     .confirm-cancel-btn:hover{border-color:var(--danger);color:var(--danger)}
 
@@ -308,47 +305,45 @@
     #myMissionsModal .modal-box{width:860px}
     .my-missions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
     .saved-mission-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all 0.2s var(--ease);position:relative}
-    .saved-mission-card:hover{border-color:var(--border-a);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+    .saved-mission-card:hover{border-color:rgba(255,255,255,0.2)}
     .saved-mission-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px}
     .saved-mission-meta{font-size:11px;color:var(--text2);margin-bottom:10px;line-height:1.6}
     .saved-mission-actions{display:flex;gap:6px;margin-top:10px}
     .mission-status-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:0.06em}
-    .status-planning{background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.2)}
+    .status-planning{background:rgba(255,255,255,0.06);color:var(--text2);border:1px solid var(--border)}
     .status-ready{background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.2)}
     .no-missions{text-align:center;padding:48px 24px;color:var(--text2)}
     .no-missions-icon{font-size:48px;margin-bottom:16px;opacity:0.3}
     .no-missions-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px}
 
     /* ── MISSION LOADING OVERLAY ─────────────────────────── */
-    #missionOverlay{position:fixed;inset:0;z-index:800;background:rgba(5,10,14,0.95);backdrop-filter:blur(20px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;opacity:0;visibility:hidden;transition:opacity 0.3s var(--ease),visibility 0.3s}
+    #missionOverlay{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;opacity:0;visibility:hidden;transition:opacity 0.3s var(--ease),visibility 0.3s}
     #missionOverlay.visible{opacity:1;visibility:visible}
-    .ov-logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .ov-rocket{font-size:48px;animation:rocket-bounce 1.2s ease-in-out infinite}
-    @keyframes rocket-bounce{0%,100%{transform:translateY(0) rotate(-45deg)}50%{transform:translateY(-12px) rotate(-45deg)}}
-    .ov-card{background:var(--card);border:1px solid var(--border-a);border-radius:20px;padding:36px 48px;text-align:center;min-width:360px;max-width:480px;box-shadow:var(--shadow)}
+    .ov-logo{font-size:18px;font-weight:600;letter-spacing:0.1em;color:var(--text)}
+    .ov-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:36px 48px;text-align:center;min-width:360px;max-width:480px;box-shadow:var(--shadow)}
     .ov-stage{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;min-height:22px;transition:opacity 0.3s}
     .ov-substage{font-size:12px;color:var(--text2);margin-bottom:20px;min-height:18px}
     .ov-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:12px}
-    .ov-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;width:0%;transition:width 0.6s var(--ease)}
-    .ov-percent{font-size:28px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+    .ov-bar-fill{height:100%;background:var(--text);border-radius:2px;width:0%;transition:width 0.6s var(--ease)}
+    .ov-percent{font-size:28px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;font-family:var(--mono)}
     .ov-cancel{font-size:11px;color:var(--text2);margin-top:16px;cursor:pointer}
     .ov-cancel:hover{color:var(--danger)}
 
     /* ── MISSION DASHBOARD ───────────────────────────────── */
     #missionDashboard{position:fixed;inset:0;z-index:2000;background:var(--bg);display:flex;flex-direction:column;opacity:0;visibility:hidden;transition:opacity 0.35s var(--ease),visibility 0.35s;transform:translateY(20px)}
     #missionDashboard.open{opacity:1;visibility:visible;transform:translateY(0);transition:opacity 0.35s var(--ease),visibility 0.35s,transform 0.35s var(--ease)}
-    .dash-topbar{height:60px;flex-shrink:0;background:linear-gradient(90deg,#080e14,#0a1018);border-bottom:1px solid var(--border-a);display:flex;align-items:center;padding:0 20px;gap:16px}
+    .dash-topbar{height:56px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px}
     .dash-back-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:7px 14px;border-radius:var(--radius-sm);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:0.04em}
-    .dash-back-btn:hover{border-color:var(--accent);color:var(--accent)}
-    .dash-mission-name{font-size:16px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .dash-status{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.1em;background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.2)}
-    .dash-save-btn{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--success);padding:7px 14px;border-radius:var(--radius-sm);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap}
-    .dash-save-btn:hover{background:rgba(16,185,129,0.2)}
+    .dash-back-btn:hover{border-color:rgba(255,255,255,0.3);color:var(--text)}
+    .dash-mission-name{font-size:15px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .dash-status{font-size:10px;font-weight:600;padding:3px 10px;border-radius:2px;text-transform:uppercase;letter-spacing:0.1em;background:rgba(255,255,255,0.06);color:var(--text2);border:1px solid var(--border)}
+    .dash-save-btn{background:transparent;border:1px solid var(--border);color:var(--text2);padding:7px 14px;border-radius:var(--radius-sm);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap}
+    .dash-save-btn:hover{border-color:rgba(255,255,255,0.3);color:var(--text)}
     .dash-tab-bar{flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;padding:0 20px;scrollbar-width:none}
     .dash-tab-bar::-webkit-scrollbar{display:none}
     .dash-tab{padding:14px 18px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap;letter-spacing:0.04em;text-transform:uppercase;background:none;border-left:none;border-right:none;border-top:none;font-family:var(--font)}
     .dash-tab:hover{color:var(--text)}
-    .dash-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+    .dash-tab.active{color:var(--text);border-bottom-color:var(--text)}
     .dash-content{flex:1;overflow-y:auto;overflow-x:hidden}
     .dash-tab-panel{display:none;padding:32px;max-width:1200px;margin:0 auto}
     .dash-tab-panel.active{display:block}
@@ -359,47 +354,46 @@
     .dash-section-title::after{content:'';flex:1;height:1px;background:var(--border)}
     .dash-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
     .dash-stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;transition:all 0.2s}
-    .dash-stat-card:hover{border-color:var(--border-a);transform:translateY(-2px)}
-    .dash-stat-val{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;margin-bottom:4px}
+    .dash-stat-card:hover{border-color:rgba(255,255,255,0.2)}
+    .dash-stat-val{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;margin-bottom:4px}
     .dash-stat-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.1em}
     .dash-two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px}
     .dash-three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
     .info-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
-    .info-card-title{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px}
+    .info-card-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:14px}
     .info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px}
     .info-row:last-child{border-bottom:none}
     .info-row-label{color:var(--text2)}
     .info-row-val{font-weight:600;font-variant-numeric:tabular-nums}
 
     /* Overview tab mission patch */
-    .mission-patch{width:140px;height:140px;border-radius:50%;background:conic-gradient(var(--accent),var(--accent2),var(--success),var(--accent));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 40px rgba(0,212,255,0.3),0 0 80px rgba(124,58,237,0.2);position:relative}
+    .mission-patch{width:120px;height:120px;border-radius:50%;background:var(--bg3);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
     .mission-patch-inner{width:120px;height:120px;border-radius:50%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:28px;gap:4px}
-    .mission-patch-id{font-size:10px;font-weight:800;color:var(--accent);letter-spacing:0.12em}
-    .mission-hero{display:flex;gap:32px;align-items:flex-start;margin-bottom:32px;padding:24px;background:var(--bg2);border:1px solid var(--border-a);border-radius:var(--radius)}
+    .mission-patch-id{font-size:10px;font-weight:600;color:var(--text2);letter-spacing:0.12em;font-family:var(--mono)}
+    .mission-hero{display:flex;gap:32px;align-items:flex-start;margin-bottom:32px;padding:24px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm)}
     .mission-hero-info{flex:1}
-    .mission-hero-name{font-size:22px;font-weight:800;margin-bottom:8px;background:linear-gradient(135deg,var(--text),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .mission-hero-name{font-size:22px;font-weight:600;margin-bottom:8px;color:var(--text)}
     .mission-hero-sub{font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6}
 
     /* Timeline */
     .timeline-container{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;overflow-x:auto}
     .timeline-track{position:relative;height:60px;margin:20px 0}
     .timeline-line{position:absolute;top:50%;left:0;right:0;height:2px;background:var(--border);transform:translateY(-50%)}
-    .timeline-progress{position:absolute;top:50%;left:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transform:translateY(-50%);transition:width 1s var(--ease)}
+    .timeline-progress{position:absolute;top:50%;left:0;height:2px;background:var(--text);transform:translateY(-50%);transition:width 1s var(--ease)}
     .timeline-node{position:absolute;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;border:2px solid var(--border);background:var(--bg);transition:all 0.3s}
     .timeline-node.done{background:var(--success);border-color:var(--success);box-shadow:0 0 10px rgba(16,185,129,0.5)}
-    .timeline-node.current{background:var(--accent);border-color:var(--accent);box-shadow:0 0 14px rgba(0,212,255,0.6);animation:node-pulse 1.5s ease-in-out infinite}
-    @keyframes node-pulse{0%,100%{box-shadow:0 0 14px rgba(0,212,255,0.6)}50%{box-shadow:0 0 24px rgba(0,212,255,0.9)}}
+    .timeline-node.current{background:var(--text);border-color:var(--text)}
     .timeline-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-top:8px}
     .timeline-label{text-align:center;max-width:80px}
-    .timeline-date{color:var(--accent);font-weight:600}
+    .timeline-date{color:var(--text);font-weight:600;font-family:var(--mono)}
 
     /* Rocket tab */
     .rocket-layout{display:grid;grid-template-columns:1fr 400px;gap:24px;align-items:start}
-    .rocket-canvas-wrap{background:radial-gradient(ellipse at center,#0a1628 0%,var(--bg) 100%);border:1px solid var(--border-a);border-radius:var(--radius);overflow:hidden;position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+    .rocket-canvas-wrap{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center}
     #rocketCanvas{display:block;width:100%;height:100%}
     .rocket-viewer-controls{position:absolute;bottom:16px;right:16px;display:flex;gap:8px}
-    .rocket-ctrl-btn{background:rgba(13,17,23,0.8);border:1px solid var(--border);color:var(--text2);padding:6px 10px;border-radius:var(--radius-sm);font-family:var(--font);font-size:11px;cursor:pointer;transition:all 0.2s;backdrop-filter:blur(8px)}
-    .rocket-ctrl-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .rocket-ctrl-btn{background:rgba(17,17,17,0.9);border:1px solid var(--border);color:var(--text2);padding:6px 10px;border-radius:var(--radius-sm);font-family:var(--font);font-size:11px;cursor:pointer;transition:all 0.2s}
+    .rocket-ctrl-btn:hover{border-color:rgba(255,255,255,0.3);color:var(--text)}
     .rocket-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-size:12px;color:var(--text2)}
     .launch-anim-btn{width:100%;padding:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;border-radius:var(--radius-sm);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:12px;text-transform:uppercase;letter-spacing:0.06em}
     .launch-anim-btn:hover{background:rgba(239,68,68,0.2);border-color:#ef4444;color:#fff}
@@ -408,24 +402,24 @@
 
 
     /* Trajectory tab */
-    #helioCanvas{width:100%;aspect-ratio:1;max-height:480px;border-radius:var(--radius);border:1px solid var(--border);background:radial-gradient(ellipse at center,#080f1a,var(--bg));cursor:crosshair}
+    #helioCanvas{width:100%;aspect-ratio:1;max-height:480px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);cursor:crosshair}
     .dv-budget-bar{height:40px;border-radius:var(--radius-sm);overflow:hidden;display:flex;margin-bottom:8px}
     .dv-segment{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:rgba(255,255,255,0.9);transition:flex 0.5s var(--ease);min-width:30px;cursor:help}
     .traj-metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
     .traj-metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;text-align:center}
-    .traj-metric-val{font-size:20px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;margin-bottom:4px}
+    .traj-metric-val{font-size:20px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;margin-bottom:4px;font-family:var(--mono)}
     .traj-metric-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em}
 
     /* Cost analysis tab */
     .cost-chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;display:flex;align-items:center;justify-content:center}
     .cost-chart-wrap canvas{max-height:280px}
-    .sensitivity-slider{width:100%;accent-color:var(--accent);cursor:pointer;margin:8px 0}
+    .sensitivity-slider{width:100%;accent-color:var(--text);cursor:pointer;margin:8px 0}
     .sensitivity-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;font-size:12px}
     .sensitivity-label{width:140px;color:var(--text2);flex-shrink:0}
     .sensitivity-val{width:60px;text-align:right;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
     .cost-waterfall{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
     .waterfall-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px}
-    .waterfall-row:last-child{border-bottom:none;margin-top:4px;padding-top:12px;border-top:1px solid var(--border-a)}
+    .waterfall-row:last-child{border-bottom:none;margin-top:4px;padding-top:12px;border-top:1px solid var(--border)}
     .waterfall-label{width:180px;color:var(--text2);flex-shrink:0}
     .waterfall-bar-wrap{flex:1;height:20px;background:rgba(255,255,255,0.03);border-radius:3px;overflow:hidden}
     .waterfall-bar{height:100%;border-radius:3px;transition:width 1s var(--ease)}
@@ -447,7 +441,7 @@
     .risk-matrix{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:3px;aspect-ratio:1;max-width:420px;margin:0 auto}
     .risk-quadrant{border-radius:6px;padding:12px;position:relative;min-height:120px}
     .risk-q-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px}
-    .risk-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;cursor:help;transition:transform 0.2s;margin:3px;float:left}
+    .risk-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;cursor:help;transition:transform 0.2s;margin:3px;float:left}
     .risk-dot:hover{transform:scale(1.2)}
     .risk-cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .risk-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px}
@@ -462,7 +456,7 @@
     .risk-meter{display:flex;align-items:center;gap:12px;margin-top:20px}
     .risk-meter-bar{flex:1;height:8px;background:linear-gradient(90deg,var(--success),var(--gold),var(--danger));border-radius:4px;position:relative}
     .risk-meter-needle{position:absolute;top:-4px;width:3px;height:16px;background:#fff;border-radius:2px;transform:translateX(-50%);transition:left 0.8s var(--ease);box-shadow:0 0 6px rgba(255,255,255,0.5)}
-    .risk-overall-badge{font-size:14px;font-weight:800;padding:8px 16px;border-radius:var(--radius-sm)}
+    .risk-overall-badge{font-size:14px;font-weight:700;padding:8px 16px;border-radius:var(--radius-sm)}
 
     /* Porkchop plot */
     #porkchopCanvas{height:360px;max-height:360px}
@@ -471,24 +465,23 @@
     /* Resources tab */
     .resource-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px}
     .resource-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;cursor:pointer;transition:all 0.2s;text-align:center}
-    .resource-card:hover{border-color:var(--border-a);transform:translateY(-2px)}
+    .resource-card:hover{border-color:rgba(255,255,255,0.2)}
     .resource-icon{font-size:28px;margin-bottom:8px}
     .resource-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px}
     .resource-desc{font-size:11px;color:var(--text2)}
     .glossary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .glossary-term{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px}
-    .glossary-word{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:4px}
+    .glossary-word{font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px;font-family:var(--mono)}
     .glossary-def{font-size:11px;color:var(--text2);line-height:1.5}
 
     /* ── TOOLTIPS ────────────────────────────────────────── */
     [data-tip]{position:relative;cursor:help}
-    [data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) translateY(4px);background:var(--bg3);border:1px solid var(--border-a);color:var(--text);font-size:11px;padding:6px 10px;border-radius:var(--radius-sm);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.2s,transform 0.2s;z-index:999;box-shadow:var(--shadow);max-width:240px;white-space:normal;text-align:center}
+    [data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) translateY(4px);background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:6px 10px;border-radius:var(--radius-sm);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.2s,transform 0.2s;z-index:999;box-shadow:var(--shadow);max-width:240px;white-space:normal;text-align:center}
     [data-tip]:hover::after{opacity:1;transform:translateX(-50%) translateY(0)}
 
     /* ── ANIMATIONS ──────────────────────────────────────── */
     @keyframes count-up{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
     .animate-in{animation:count-up 0.4s var(--ease) both}
-    @keyframes glow-pulse{0%,100%{box-shadow:0 0 12px rgba(0,212,255,0.2)}50%{box-shadow:0 0 24px rgba(0,212,255,0.5)}}
     @keyframes slide-in-left{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
     @keyframes fade-in{from{opacity:0}to{opacity:1}}
     .animate-slide-in{animation:slide-in-left 0.4s var(--ease) both}
@@ -517,7 +510,6 @@
 <!-- ── Mission Planning Loading Overlay ──────────────────────── -->
 <div id="missionOverlay" role="status" aria-live="polite">
     <div class="ov-logo">NEXUS ORBITAL</div>
-    <div class="ov-rocket">🚀</div>
     <div class="ov-card">
         <div class="ov-stage" id="ovStage">Initializing mission planner…</div>
         <div class="ov-substage" id="ovSub">Scanning orbital database</div>
@@ -533,7 +525,7 @@
     <!-- Header -->
     <header id="hdr">
         <div class="hdr-logo">
-            <div class="hdr-logo-icon">🌌</div>
+            <div class="hdr-logo-icon">N</div>
             <div>
                 <div class="hdr-logo-text">NEXUS ORBITAL</div>
                 <div class="hdr-tagline">Asteroid Mining Mission Intelligence</div>
@@ -552,11 +544,11 @@
                 <button class="preset-btn" data-preset="62" title="Globe Focus (60/40)">60/40</button>
                 <button class="preset-btn active" data-preset="50" title="Equal split">50/50</button>
                 <button class="preset-btn" data-preset="38" title="Data Focus (40/60)">40/60</button>
-                <button class="preset-btn" data-preset="100" title="Full globe">🌐</button>
-                <button class="preset-btn" data-preset="0" title="Full data">📋</button>
+                <button class="preset-btn" data-preset="100" title="Full globe">Globe</button>
+                <button class="preset-btn" data-preset="0" title="Full data">Data</button>
             </div>
             <div class="hdr-divider"></div>
-            <button class="hdr-btn accent-btn" id="myMissionsBtn">📁 My Missions</button>
+            <button class="hdr-btn accent-btn" id="myMissionsBtn">My Missions</button>
             <button class="hdr-btn" id="refreshDataBtn" title="Refresh NASA data">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
                 Refresh
@@ -745,14 +737,14 @@
 <div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true">
     <div class="modal-box" style="width:760px">
         <div class="modal-header">
-            <div class="modal-title">⚡ Confirm Mission Selection</div>
+            <div class="modal-title">Confirm Mission Selection</div>
             <button class="modal-close" id="closeConfirmBtn">✕</button>
         </div>
         <div class="modal-body">
             <div class="confirm-grid" id="confirmGrid"></div>
             <div class="confirm-warning">⚠ Review all mission parameters carefully before proceeding. This commitment initiates your mission dashboard.</div>
             <div class="confirm-actions">
-                <button class="confirm-proceed-btn" id="confirmProceedBtn">🚀 Confirm &amp; Proceed to Mission Dashboard</button>
+                <button class="confirm-proceed-btn" id="confirmProceedBtn">Confirm &amp; Open Mission Dashboard</button>
                 <button class="confirm-cancel-btn" id="confirmCancelBtn">Cancel</button>
             </div>
         </div>
@@ -763,7 +755,7 @@
 <div class="modal-overlay" id="myMissionsModal" role="dialog" aria-modal="true">
     <div class="modal-box" style="width:860px">
         <div class="modal-header">
-            <div class="modal-title">📁 My Missions</div>
+            <div class="modal-title">My Missions</div>
             <button class="modal-close" id="closeMyMissionsBtn">✕</button>
         </div>
         <div class="modal-body">
@@ -781,7 +773,7 @@
         <div class="dash-mission-name" id="dashMissionName">NEXUS-1: Mission Dashboard</div>
         <span class="dash-status" id="dashStatus">PLANNING</span>
         <div style="flex:1"></div>
-        <button class="dash-save-btn" id="dashSaveBtn">💾 Save Mission</button>
+        <button class="dash-save-btn" id="dashSaveBtn">Save Mission</button>
     </div>
 
     <!-- Tab Bar -->
@@ -798,7 +790,7 @@
         <div class="dash-tab-panel active" id="tab-overview">
             <div class="mission-hero" id="missionHero">
                 <div class="mission-patch">
-                    <div class="mission-patch-inner"><span>🚀</span><span class="mission-patch-id" id="patchId">NX-1</span></div>
+                    <div class="mission-patch-inner"><span class="mission-patch-id" id="patchId">NX-1</span></div>
                 </div>
                 <div class="mission-hero-info">
                     <div class="mission-hero-name" id="heroName">Mission Name</div>
@@ -844,7 +836,7 @@
                     </div>
                     <div style="position:relative">
                         <canvas id="helioCanvas"></canvas>
-                        <div id="helioTimeDisplay" style="position:absolute;top:12px;left:12px;font-size:11px;font-family:var(--font);color:var(--accent);background:rgba(5,10,14,0.7);padding:4px 8px;border-radius:4px;display:none">T+0 days</div>
+                        <div id="helioTimeDisplay" style="position:absolute;top:12px;left:12px;font-size:11px;font-family:var(--mono);color:var(--text2);background:rgba(0,0,0,0.7);padding:4px 8px;border-radius:2px;display:none">T+0 days</div>
                     </div>
                     <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap" id="helioLegend"></div>
                 </div>
@@ -859,7 +851,7 @@
             </div>
             <!-- Globe link -->
             <div style="margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-                <button class="btn btn-primary btn-sm" id="viewTrajGlobeBtn">🌐 View Trajectory on Main Globe</button>
+                <button class="btn btn-primary btn-sm" id="viewTrajGlobeBtn">View on Globe</button>
                 <span style="font-size:11px;color:var(--text2)">Returns to the 3D globe with trajectory arc rendered</span>
             </div>
 
@@ -868,7 +860,7 @@
                 <div class="dash-section-title">Launch Opportunity Map (Porkchop Plot)</div>
                 <div class="info-card" style="padding:0;overflow:hidden">
                     <canvas id="porkchopCanvas" style="width:100%;display:block;cursor:crosshair"></canvas>
-                    <div id="porkchopTooltip" style="position:absolute;background:var(--bg3);border:1px solid var(--border-a);color:var(--text);font-size:11px;padding:6px 10px;border-radius:var(--radius-sm);pointer-events:none;opacity:0;transition:opacity 0.15s;z-index:10;font-family:var(--font)"></div>
+                    <div id="porkchopTooltip" style="position:absolute;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:6px 10px;border-radius:var(--radius-sm);pointer-events:none;opacity:0;transition:opacity 0.15s;z-index:10;font-family:var(--font)"></div>
                 </div>
                 <div style="display:flex;gap:16px;margin-top:8px;font-size:10px;color:var(--text2);flex-wrap:wrap;align-items:center">
                     <span>X-axis: Departure Date · Y-axis: Time of Flight (days)</span>
@@ -897,7 +889,7 @@
                 <div class="info-card">
                     <div style="font-size:12px;color:var(--text2);margin-bottom:16px">Adjust assumptions to see how profit changes.</div>
                     <div id="sensitivityControls"></div>
-                    <div id="sensitivityResult" style="margin-top:16px;padding:16px;background:rgba(0,212,255,0.05);border:1px solid var(--border-a);border-radius:var(--radius-sm);font-size:12px;display:none"></div>
+                    <div id="sensitivityResult" style="margin-top:16px;padding:16px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;display:none"></div>
                 </div>
             </div>
         </div>
@@ -1009,31 +1001,34 @@ function earthHelioAU() {
 
 function padColour(cc) {
     cc = (cc||'').toUpperCase();
-    if (['USA','US'].includes(cc)) return '#00d4ff';
+    if (['USA','US'].includes(cc)) return '#e8e8e8';
     if (['RUS','KAZ'].includes(cc)) return '#ef4444';
-    if (['FRA','GUF'].includes(cc)) return '#10b981';
-    if (['IND','JPN','CHN'].includes(cc)) return '#f59e0b';
-    return '#a78bfa';
+    if (['FRA','GUF'].includes(cc)) return '#22c55e';
+    if (['IND','JPN','CHN'].includes(cc)) return '#c8890a';
+    return '#888888';
 }
 
 function asteroidColour(ast) {
     if (ast.is_hazardous) return '#ef4444';
-    if ((ast.estimated_value||0) > 1e9) return '#10b981';
-    return '#7c3aed';
+    if ((ast.estimated_value||0) > 1e9) return '#22c55e';
+    return '#666666';
 }
 
 let _plotlyReady = false;
-let _trajTraceIdx = null; // index of the active trajectory trace in Plotly data array
+// Fixed trace indices — never add/delete traces after init (shifts indices)
+let _TRAJ_TRACE = null;
+let _PAD_TRACE  = null;
+let _AST_TRACE  = null;
 
 const PLOTLY_DIV = 'plotly-viz';
 
 // Build the base layout (dark space theme)
 function buildPlotlyLayout() {
     return {
-        paper_bgcolor: '#050a0e',
-        plot_bgcolor:  '#050a0e',
+        paper_bgcolor: '#0a0a0a',
+        plot_bgcolor:  '#0a0a0a',
         scene: {
-            bgcolor: '#050a0e',
+            bgcolor: '#0a0a0a',
             xaxis: { showgrid: false, zeroline: false, showticklabels: false, title: '', showspikes: false },
             yaxis: { showgrid: false, zeroline: false, showticklabels: false, title: '', showspikes: false },
             zaxis: { showgrid: false, zeroline: false, showticklabels: false, title: '', showspikes: false },
@@ -1043,7 +1038,7 @@ function buildPlotlyLayout() {
         },
         margin: { l: 0, r: 0, t: 0, b: 0 },
         showlegend: false,
-        font: { family: 'Inter, sans-serif', color: '#9ca3af', size: 11 },
+        font: { family: 'Space Grotesk, sans-serif', color: '#777777', size: 11 },
         hovermode: 'closest',
         uirevision: 'true',
     };
@@ -1086,25 +1081,29 @@ async function initPlotly() {
     for (let i=0; i<=90; i++) { const a=(i/90)*Math.PI*2; orbitX.push(Math.cos(a)); orbitY.push(Math.sin(a)); }
     traces.push({ type:'scatter3d', mode:'lines',
         x:orbitX, y:orbitY, z:new Array(91).fill(0),
-        line:{ color:'rgba(0,212,255,0.15)', width:1 },
+        line:{ color:'rgba(255,255,255,0.1)', width:1 },
         hoverinfo:'none', name:"Earth's Orbit", showlegend:false });
 
     // ── Earth
     traces.push({ type:'scatter3d', mode:'markers+text',
         x:[ep.x], y:[ep.y], z:[0],
-        marker:{ size:10, color:'#00d4ff', opacity:1, symbol:'circle',
-                 line:{ color:'rgba(0,212,255,0.5)', width:2 } },
-        text:['🌍 Earth'], textfont:{ color:'#00d4ff', size:10 }, textposition:'top center',
+        marker:{ size:10, color:'#e8e8e8', opacity:1, symbol:'circle',
+                 line:{ color:'rgba(255,255,255,0.4)', width:2 } },
+        text:['Earth'], textfont:{ color:'#888888', size:10 }, textposition:'top center',
         hovertemplate:'<b>Earth</b><br>Launch origin<extra></extra>',
         name:'Earth', showlegend:false });
 
-    // ── Launchpads + Asteroids (fetched async, added later)
-    // Add placeholder empty traces so indices stay fixed
-    const PAD_TRACE  = traces.length; traces.push({ type:'scatter3d', mode:'markers', x:[], y:[], z:[], name:'Launch Sites',  showlegend:false, hoverinfo:'none' });
-    const AST_TRACE  = traces.length; traces.push({ type:'scatter3d', mode:'markers', x:[], y:[], z:[], name:'Asteroids',     showlegend:false, hoverinfo:'none' });
+    // ── Fixed-index placeholder traces (never add/delete after init)
+    _PAD_TRACE  = traces.length;
+    traces.push({ type:'scatter3d', mode:'markers', x:[], y:[], z:[], name:'Launch Sites', showlegend:false, hoverinfo:'none' });
+    _AST_TRACE  = traces.length;
+    traces.push({ type:'scatter3d', mode:'markers', x:[], y:[], z:[], name:'Asteroids',    showlegend:false, hoverinfo:'none' });
+    _TRAJ_TRACE = traces.length;
+    traces.push({ type:'scatter3d', mode:'lines',   x:[], y:[], z:[], name:'Trajectory',   showlegend:false, hoverinfo:'none',
+                  line:{ color:'#10b981', width:5 }, marker:{ size:6, color:'#10b981' } });
 
     await Plotly.newPlot(PLOTLY_DIV, traces, buildPlotlyLayout(), {
-        responsive: true, displayModeBar: false, scrollZoom: true,
+        responsive: true, displayModeBar: false,
     });
     _plotlyReady = true;
 
@@ -1115,7 +1114,7 @@ async function initPlotly() {
             const px=[], py=[], pz=[], pc=[], pt=[];
             pads.forEach(pad => {
                 const jx=(Math.random()-0.5)*0.004, jy=(Math.random()-0.5)*0.004;
-                px.push(ep.x+jx); py.push(ep.y+jy); pz.push(jx*0);
+                px.push(ep.x+jx); py.push(ep.y+jy); pz.push(0);
                 pc.push(padColour(pad.country));
                 pt.push(pad.name);
                 launchpadEntities[pad.name] = { country: pad.country, pos: { x:ep.x+jx, y:ep.y+jy, z:0 } };
@@ -1124,8 +1123,8 @@ async function initPlotly() {
                 x:[px], y:[py], z:[pz],
                 'marker.color':[pc], 'marker.size':[7], 'marker.symbol':['diamond'],
                 text:[pt], hovertemplate:['<b>%{text}</b><br>Launch Site<extra></extra>'],
-                mode:['markers'], textfont:[{color:'#9ca3af',size:9}],
-            }, [PAD_TRACE]);
+                mode:['markers'],
+            }, [_PAD_TRACE]);
         }).catch(() => {});
 
     // ── Load asteroids
@@ -1146,10 +1145,9 @@ async function initPlotly() {
             Plotly.restyle(PLOTLY_DIV, {
                 x:[ax], y:[ay], z:[az],
                 'marker.color':[ac], 'marker.size':[5], 'marker.symbol':['circle'],
-                text:[at],
-                hovertemplate:['<b>%{text}</b><extra></extra>'],
+                text:[at], hovertemplate:['<b>%{text}</b><extra></extra>'],
                 mode:['markers'],
-            }, [AST_TRACE]);
+            }, [_AST_TRACE]);
         }).catch(() => {});
 }
 
@@ -1300,20 +1298,7 @@ function selectAsteroid(asteroid) {
     document.querySelectorAll("#asteroidTable tbody tr").forEach(r =>
         r.classList.toggle("selected", r.dataset.asteroidId === String(asteroid.id)));
 
-    // Highlight selected asteroid in 3D view
-    Object.values(asteroidEntities).forEach(entry => {
-        try {
-            if (entry?.mesh?.material) {
-                entry.mesh.material.color.set(asteroidColour(entry.data));
-                entry.mesh.scale.set(5, 5, 1);
-            }
-        } catch(_) {}
-    });
-    const selEntry = asteroidEntities[asteroid.id];
-    if (selEntry?.mesh?.material) {
-        selEntry.mesh.material.color.set('#fbbf24');
-        selEntry.mesh.scale.set(10, 10, 1);
-    }
+    // (Asteroid highlighting in 3D view handled by trajectory arc when mission is selected)
 
     document.getElementById("missionPlanner")?.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
@@ -1321,7 +1306,7 @@ function selectAsteroid(asteroid) {
 function renderTable(asteroids) {
     const container = document.getElementById("asteroidTable");
     if (!asteroids.length) {
-        container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔭</div><div class="empty-state-title">No asteroids found</div><div class="empty-state-sub">Try adjusting filters</div></div>`;
+        container.innerHTML = `<div class="empty-state"><div class="empty-state-title">No asteroids found</div><div class="empty-state-sub">Try adjusting filters</div></div>`;
         return;
     }
     const total = asteroids.length, pages = Math.ceil(total/PAGE_SIZE);
@@ -1495,7 +1480,7 @@ function renderMissionResults(results) {
     missionResults=results; selectedMissions={}; updateCompareBar();
     const container=document.getElementById("missionResults");
     if (!results?.length) {
-        container.innerHTML=`<div class="empty-state"><div class="empty-state-icon">📡</div><div class="empty-state-title">No mission options</div><div class="empty-state-sub">Try a wider departure window or longer flight time</div></div>`;
+        container.innerHTML=`<div class="empty-state"><div class="empty-state-title">No mission options</div><div class="empty-state-sub">Try a wider departure window or longer flight time</div></div>`;
         return;
     }
     container.innerHTML = results.map((r,idx) => {
@@ -1507,7 +1492,7 @@ function renderMissionResults(results) {
                 <div class="rank-badge ${rankCls}">${r.rank}</div>
                 <div class="card-title-block">
                     <div class="card-site" title="${r.launch_site_name}">${r.launch_site_name}</div>
-                    <div class="card-rocket">🚀 ${r.rocket_name} · ${r.country||""}</div>
+                    <div class="card-rocket">${r.rocket_name} · ${r.country||""}</div>
                     <div class="card-dates">${r.departure_date} → ${r.arrival_date}</div>
                 </div>
                 ${isTop?'<div class="best-badge">Best Option</div>':""}
@@ -1550,9 +1535,15 @@ function setTrajectoryStatus(msg, isError) {
 }
 
 function clearTrajectory() {
-    if (_trajTraceIdx !== null && _plotlyReady) {
-        try { Plotly.deleteTraces(PLOTLY_DIV, [_trajTraceIdx]); } catch(_) {}
-        _trajTraceIdx = null;
+    if (_plotlyReady && _TRAJ_TRACE !== null) {
+        try {
+            Plotly.restyle(PLOTLY_DIV, { x:[[]], y:[[]], z:[[]] }, [_TRAJ_TRACE]);
+            // Restore solar-system camera
+            Plotly.relayout(PLOTLY_DIV, {
+                'scene.camera': { eye:{x:0,y:-2.5,z:1.5}, center:{x:0,y:0,z:0} },
+                'scene.aspectmode': 'cube',
+            });
+        } catch(_) {}
     }
     trajectoryEntity = null;
     const ti = document.getElementById("traj-info");
@@ -1565,12 +1556,11 @@ function viewTrajectory(resultIdx) {
         const r = missionResults[resultIdx];
         if (!r) { setTrajectoryStatus("Mission result not found.", true); return; }
         clearTrajectory();
-
-        if (!_plotlyReady) { setTrajectoryStatus("3D view not ready.", true); return; }
+        if (!_plotlyReady || _TRAJ_TRACE === null) { setTrajectoryStatus("3D view not ready.", true); return; }
 
         const ep = earthHelioAU();
 
-        // End position: asteroid in AU
+        // End position in AU
         let endPos = null;
         if (selectedAsteroid) {
             const entry = asteroidEntities[selectedAsteroid.id];
@@ -1588,30 +1578,41 @@ function viewTrajectory(resultIdx) {
         const prof = r.potential_profit_usd || 0;
         const arcHex = prof > 0 ? '#10b981' : prof > -(r.mission_cost_usd||1)*0.1 ? '#f59e0b' : '#ef4444';
 
-        // Quadratic Bezier arc from Earth → Asteroid
+        // Quadratic Bezier arc
         const tx=[], ty=[], tz=[];
-        const mx = (ep.x+endPos.x)/2, my = (ep.y+endPos.y)/2, mz = (ep.z+endPos.z)/2;
         const dist = Math.hypot(endPos.x-ep.x, endPos.y-ep.y, endPos.z-ep.z);
-        const bx = mx, by = my + dist*0.35, bz = mz + dist*0.1; // bow point
-        for (let i=0; i<=60; i++) {
-            const t=i/60, s=1-t;
+        const bx = (ep.x+endPos.x)/2;
+        const by = (ep.y+endPos.y)/2 + dist*0.4;
+        const bz = (ep.z+endPos.z)/2 + dist*0.15;
+        for (let i=0; i<=80; i++) {
+            const t=i/80, s=1-t;
             tx.push(s*s*ep.x + 2*s*t*bx + t*t*endPos.x);
             ty.push(s*s*ep.y + 2*s*t*by + t*t*endPos.y);
             tz.push(s*s*ep.z + 2*s*t*bz + t*t*endPos.z);
         }
 
-        const gd = document.getElementById(PLOTLY_DIV);
-        _trajTraceIdx = gd._fullData ? gd._fullData.length : null;
-        Plotly.addTraces(PLOTLY_DIV, [{
-            type: 'scatter3d', mode: 'lines+markers',
-            x: tx, y: ty, z: tz,
-            line: { color: arcHex, width: 5 },
-            marker: { size: [4,...new Array(59).fill(0),8], color: arcHex, opacity: 0.9 },
-            hoverinfo: 'none', name: 'Trajectory', showlegend: false,
-        }]).then(gd2 => { _trajTraceIdx = gd2.data.length - 1; });
+        // Update trajectory trace via restyle (no index shifting)
+        Plotly.restyle(PLOTLY_DIV, {
+            x: [tx], y: [ty], z: [tz],
+            'line.color': [arcHex], 'line.width': [5],
+            'marker.color': [arcHex], 'marker.size': [6],
+            mode: ['lines+markers'],
+        }, [_TRAJ_TRACE]);
 
-        trajectoryEntity = true; // mark as active
+        // Zoom camera to show Earth + asteroid + full arc
+        const pad = Math.max(dist * 1.8, 0.08); // ensure minimum visible padding
+        const cx = (ep.x + endPos.x) / 2;
+        const cy = (ep.y + endPos.y) / 2;
+        const cz = (ep.z + endPos.z) / 2;
+        Plotly.relayout(PLOTLY_DIV, {
+            'scene.camera': {
+                eye:    { x: cx + pad*1.5, y: cy - pad*1.5, z: cz + pad*2 },
+                center: { x: cx,           y: cy,            z: cz         },
+            },
+            'scene.aspectmode': 'cube',
+        });
 
+        trajectoryEntity = true;
         const colLabel = prof>0?"Profitable":prof>-(r.mission_cost_usd||1)*0.1?"Break-even":"Loss-making";
         document.getElementById("trajInfoRows").innerHTML = `
             <div class="traj-row"><span class="traj-row-label">Rocket</span><span class="traj-row-val">${r.rocket_name}</span></div>
@@ -1653,7 +1654,7 @@ function openConfirmModal(resultIdx) {
         <div class="confirm-field"><div class="confirm-label">Total Mission Cost</div><div class="confirm-value big">${fmtUSD(r.mission_cost_usd)}</div></div>
         <div class="confirm-field"><div class="confirm-label">Expected Return</div><div class="confirm-value big ${profPos?"green":"red"}">${profPos?"+":""}${fmtUSD(profit)}</div></div>
         <div class="confirm-field"><div class="confirm-label">Asteroid Value</div><div class="confirm-value" style="color:var(--success)">${fmtUSD(r.asteroid_value_usd)}</div></div>
-        <div class="confirm-field"><div class="confirm-label">ROI</div><div class="confirm-value ${profPos?"green":"red"}" style="font-size:20px;font-weight:800">${profPos?"+":""}${roi}%</div></div>`;
+        <div class="confirm-field"><div class="confirm-label">ROI</div><div class="confirm-value ${profPos?"green":"red"}" style="font-size:20px;font-weight:700">${profPos?"+":""}${roi}%</div></div>`;
 
     openModal("confirmModal");
 }
@@ -1727,7 +1728,7 @@ document.getElementById("dashSaveBtn").addEventListener("click", () => {
     if (!_activeMission) return;
     saveMission(_activeMission);
     document.getElementById("dashSaveBtn").textContent = "✓ Saved!";
-    setTimeout(() => { document.getElementById("dashSaveBtn").textContent = "💾 Save Mission"; }, 2000);
+    setTimeout(() => { document.getElementById("dashSaveBtn").textContent = "Save Mission"; }, 2000);
 });
 
 // ── Tab 1: Overview ──────────────────────────────
@@ -1809,7 +1810,7 @@ function populateOverview(m) {
     const rocketEl = document.getElementById("overviewRocketCard");
     if (rocketEl) {
         rocketEl.innerHTML = `
-            <div class="info-card-title">🚀 ${rocketName} — Launch Vehicle</div>
+            <div class="info-card-title">${rocketName} — Launch Vehicle</div>
             ${[
                 infoRow("Manufacturer", specs.manufacturer),
                 infoRow("First Flight", specs.firstFlight),
@@ -1860,7 +1861,7 @@ function initTrajectoryTab(m) {
     const segments = [
         {label:"Depart LEO", val:3.2, color:"#374151"},
         {label:"Escape Earth", val:0.6, color:"#4c1d95"},
-        {label:"Transfer Departure", val:dvDepart, color:"#7c3aed"},
+        {label:"Transfer Departure", val:dvDepart, color:"#444444"},
         {label:"Mid-course", val:0.05, color:"#fbbf24"},
         {label:"Arrival Burn", val:dvArrive, color:"#f59e0b"},
     ];
@@ -1923,7 +1924,7 @@ function drawHelioCanvas(m, sma_ast, ecc_transfer) {
     const AU = W * 0.38; // pixels per AU
 
     // Background
-    ctx.fillStyle = "#030810";
+    ctx.fillStyle = "#0a0a0a";
     ctx.fillRect(0,0,W,H);
 
     // Stars
@@ -1945,7 +1946,7 @@ function drawHelioCanvas(m, sma_ast, ecc_transfer) {
         ctx.stroke();
         if (label) {
             ctx.fillStyle = color;
-            ctx.font = "10px Inter,sans-serif";
+            ctx.font = "10px 'Space Grotesk',sans-serif";
             ctx.fillText(label, xa + a*AU + 4, cy - 4);
         }
     }
@@ -1960,7 +1961,7 @@ function drawHelioCanvas(m, sma_ast, ecc_transfer) {
     ctx.setLineDash([2,4]);
     ctx.beginPath(); ctx.arc(cx,cy,0.72*AU,0,Math.PI*2);
     ctx.strokeStyle = "rgba(255,200,100,0.2)"; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle = "rgba(255,200,100,0.3)"; ctx.font="9px Inter,sans-serif";
+    ctx.fillStyle = "rgba(255,200,100,0.3)"; ctx.font="9px 'Space Grotesk',sans-serif";
     ctx.fillText("Venus",cx+0.72*AU+2,cy-2);
 
     // Earth orbit
@@ -2001,7 +2002,7 @@ function drawHelioCanvas(m, sma_ast, ecc_transfer) {
     ctx.setLineDash([4,4]);
     ctx.beginPath(); ctx.moveTo(Ex,Ey); ctx.quadraticCurveTo(bx,by,Ax,Ay);
     const trajGrad = ctx.createLinearGradient(Ex,Ey,Ax,Ay);
-    trajGrad.addColorStop(0,"rgba(0,212,255,0.9)"); trajGrad.addColorStop(1,"rgba(124,58,237,0.9)");
+    trajGrad.addColorStop(0,"rgba(232,232,232,0.9)"); trajGrad.addColorStop(1,"rgba(150,150,150,0.6)");
     ctx.strokeStyle=trajGrad; ctx.lineWidth=2; ctx.stroke();
     ctx.setLineDash([]);
 
@@ -2009,13 +2010,13 @@ function drawHelioCanvas(m, sma_ast, ecc_transfer) {
     ctx.beginPath(); ctx.arc(Ex,Ey,6,0,Math.PI*2);
     ctx.fillStyle="#3b82f6"; ctx.fill();
     ctx.strokeStyle="#60a5fa"; ctx.lineWidth=1.5; ctx.stroke();
-    ctx.fillStyle="#93c5fd"; ctx.font="10px Inter,sans-serif"; ctx.fillText("T₀",Ex+8,Ey-4);
+    ctx.fillStyle="#aaaaaa"; ctx.font="10px 'Space Grotesk',sans-serif"; ctx.fillText("T₀",Ex+8,Ey-4);
 
     // Asteroid point
     ctx.beginPath(); ctx.arc(Ax,Ay,7,0,Math.PI*2);
     ctx.fillStyle="#fbbf24"; ctx.fill();
     ctx.strokeStyle="#fde68a"; ctx.lineWidth=1.5; ctx.stroke();
-    ctx.fillStyle="#fde68a"; ctx.fillText("Target",Ax+8,Ay-4);
+    ctx.fillStyle="#aaaaaa"; ctx.fillText("Target",Ax+8,Ay-4);
 
     // Spacecraft position along transfer arc (if animating)
     const t = _helioT;
@@ -2024,12 +2025,8 @@ function drawHelioCanvas(m, sma_ast, ecc_transfer) {
         const scx = s*s*Ex + 2*s*t*bx + t*t*Ax;
         const scy = s*s*Ey + 2*s*t*by + t*t*Ay;
         ctx.beginPath(); ctx.arc(scx, scy, 5, 0, Math.PI*2);
-        ctx.fillStyle="#00d4ff"; ctx.fill();
+        ctx.fillStyle="#e8e8e8"; ctx.fill();
         ctx.strokeStyle="#ffffff"; ctx.lineWidth=1.5; ctx.stroke();
-        // Glow
-        const glow2 = ctx.createRadialGradient(scx,scy,0,scx,scy,14);
-        glow2.addColorStop(0,"rgba(0,212,255,0.4)"); glow2.addColorStop(1,"rgba(0,212,255,0)");
-        ctx.fillStyle=glow2; ctx.beginPath(); ctx.arc(scx,scy,14,0,Math.PI*2); ctx.fill();
         // Elapsed days label
         const elapsedDays = Math.round(t * (m.flight_time_days||90));
         const tdEl = document.getElementById("helioTimeDisplay");
@@ -2043,10 +2040,10 @@ function drawHelioCanvas(m, sma_ast, ecc_transfer) {
     document.getElementById("helioLegend").innerHTML = `
         <span style="font-size:10px;display:flex;align-items:center;gap:4px"><span style="width:16px;height:2px;background:rgba(100,160,255,0.7);display:inline-block"></span>Earth Orbit</span>
         <span style="font-size:10px;display:flex;align-items:center;gap:4px"><span style="width:16px;height:2px;background:rgba(251,191,36,0.7);display:inline-block"></span>Target Orbit</span>
-        <span style="font-size:10px;display:flex;align-items:center;gap:4px"><span style="width:16px;height:2px;background:rgba(0,212,255,0.8);border-top:1px dashed #00d4ff;display:inline-block"></span>Transfer Arc</span>
+        <span style="font-size:10px;display:flex;align-items:center;gap:4px"><span style="width:16px;height:2px;background:rgba(232,232,232,0.6);border-top:1px dashed #888;display:inline-block"></span>Transfer Arc</span>
         <span style="font-size:10px;display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;display:inline-block"></span>Earth at Launch</span>
-        <span style="font-size:10px;display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#fbbf24;display:inline-block"></span>Asteroid at Arrival</span>
-        <span style="font-size:10px;display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#00d4ff;display:inline-block"></span>Spacecraft</span>`;
+        <span style="font-size:10px;display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#c8890a;display:inline-block"></span>Asteroid at Arrival</span>
+        <span style="font-size:10px;display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#e8e8e8;display:inline-block"></span>Spacecraft</span>`;
 }
 
 // Store current mission ref for helio animation
@@ -2199,15 +2196,15 @@ function drawPorkchopPlot(m) {
     ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineWidth = 1.5; ctx.stroke();
     // Label
     ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 11px Inter,sans-serif";
+    ctx.font = "bold 11px 'Space Grotesk',sans-serif";
     ctx.fillText(`${m.rocket_name} — ${fmtNum(dvBest,2)} km/s`, bestX+14, bestY-6);
     ctx.fillStyle = "rgba(255,255,255,0.6)";
-    ctx.font = "10px Inter,sans-serif";
+    ctx.font = "10px 'Space Grotesk',sans-serif";
     ctx.fillText(m.departure_date, bestX+14, bestY+8);
 
     // Axis labels
     ctx.fillStyle = "rgba(156,163,175,0.9)";
-    ctx.font = "10px Inter,sans-serif";
+    ctx.font = "10px 'Space Grotesk',sans-serif";
     // X axis – departure dates
     for (let i = 0; i <= 4; i++) {
         const x = i * W/4;
@@ -2222,7 +2219,7 @@ function drawPorkchopPlot(m) {
     }
 
     // Axis titles
-    ctx.font = "bold 10px Inter,sans-serif";
+    ctx.font = "bold 10px 'Space Grotesk',sans-serif";
     ctx.fillStyle = "rgba(156,163,175,0.7)";
     ctx.fillText("Departure Date →", W/2-40, H-4);
     ctx.save();
@@ -2241,7 +2238,7 @@ function drawPorkchopPlot(m) {
     ctx.fillRect(cbX, cbY, cbW, cbH);
     ctx.strokeStyle = "rgba(255,255,255,0.3)"; ctx.lineWidth = 1;
     ctx.strokeRect(cbX, cbY, cbW, cbH);
-    ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.font = "9px Inter,sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.font = "9px 'Space Grotesk',sans-serif";
     ctx.fillText(fmtNum(dvMax,1), cbX-18, cbY+8);
     ctx.fillText(fmtNum(dvMin,1), cbX-18, cbY+cbH+4);
     ctx.fillText("km/s", cbX-18, cbY+cbH/2+4);
@@ -2285,18 +2282,18 @@ function initCostTab(m) {
     const profPos = profit >= 0;
     const banner = document.getElementById("costProfitBanner");
     if (banner) {
-        const bannerColor = profPos ? (profit>1e9?"var(--success)":"var(--accent)") : "var(--danger)";
+        const bannerColor = profPos ? "var(--success)" : "var(--danger)";
         banner.style.background = `linear-gradient(135deg,${bannerColor}18,${bannerColor}08)`;
         banner.style.border = `1px solid ${bannerColor}44`;
         banner.innerHTML = `
             <div>
                 <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text2);margin-bottom:4px">Financial Outcome</div>
-                <div style="font-size:32px;font-weight:900;color:${bannerColor};font-variant-numeric:tabular-nums">${profPos?"+":""}${fmtUSD(profit)}</div>
+                <div style="font-size:28px;font-weight:700;color:${bannerColor};font-variant-numeric:tabular-nums;font-family:var(--mono)">${profPos?"+":""}${fmtUSD(profit)}</div>
                 <div style="font-size:12px;color:var(--text2);margin-top:4px">${profPos?"Profitable mission ✓":"Loss-making at current estimates"}</div>
             </div>
             <div style="text-align:right">
                 <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text2);margin-bottom:4px">Return on Investment</div>
-                <div style="font-size:40px;font-weight:900;color:${bannerColor};font-variant-numeric:tabular-nums">${profPos?"+":""}${roi}%</div>
+                <div style="font-size:32px;font-weight:700;color:${bannerColor};font-variant-numeric:tabular-nums;font-family:var(--mono)">${profPos?"+":""}${roi}%</div>
                 <div style="font-size:11px;color:var(--text2);margin-top:4px">Total cost: ${fmtUSD(cost)}</div>
             </div>`;
     }
@@ -2349,7 +2346,7 @@ function initCostTab(m) {
                 options: {
                     responsive:true, maintainAspectRatio:true,
                     plugins: {
-                        legend:{labels:{color:"#9ca3af",font:{family:"Inter",size:11}}},
+                        legend:{labels:{color:"#777777",font:{family:"Space Grotesk",size:11}}},
                         tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmtUSD(ctx.parsed)}`}},
                     },
                     cutout: "65%",
@@ -2486,7 +2483,7 @@ function showToast(msg) {
     if (!toast) {
         toast = document.createElement("div");
         toast.id = "nexusToast";
-        toast.style.cssText = "position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--success);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;font-family:var(--font);z-index:9999;transition:opacity 0.3s;box-shadow:0 4px 20px rgba(16,185,129,0.4)";
+        toast.style.cssText = "position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:2px;font-size:13px;font-weight:600;font-family:var(--font);z-index:9999;transition:opacity 0.3s";
         document.body.appendChild(toast);
     }
     toast.textContent = msg;
@@ -2545,7 +2542,7 @@ function renderMyMissions() {
     loadSavedMissions();
     const container = document.getElementById("myMissionsContent");
     if (!_savedMissions.length) {
-        container.innerHTML = `<div class="no-missions"><div class="no-missions-icon">🚀</div><div class="no-missions-title">No missions saved yet</div><div style="font-size:13px;color:var(--text2)">Plan a mission and click "Select This Mission" to save it here.</div></div>`;
+        container.innerHTML = `<div class="no-missions"><div class="no-missions-title">No missions saved yet</div><div style="font-size:13px;color:var(--text2)">Plan a mission and click "Select This Mission" to save it here.</div></div>`;
         return;
     }
     container.innerHTML = `
