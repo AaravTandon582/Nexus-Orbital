@@ -1,4 +1,5 @@
 import os
+import threading
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
 from flask import Flask, jsonify, render_template, request
@@ -18,6 +19,20 @@ CESIUM_TOKEN = os.getenv("CESIUM_ION_TOKEN")
 
 app = Flask(__name__)
 CORS(app)
+
+
+def _prewarm_cache():
+    """Pre-populate asteroid data cache at startup so the first request is instant."""
+    try:
+        print("[startup] Pre-warming asteroid cache in background...")
+        get_asteroid_data()
+        print("[startup] Asteroid cache ready.")
+    except Exception as e:
+        print(f"[startup] Cache pre-warm failed: {e}")
+
+
+# Kick off background pre-warm as soon as the module loads
+threading.Thread(target=_prewarm_cache, daemon=True).start()
 
 
 # ---------------------------------------------------------------------------

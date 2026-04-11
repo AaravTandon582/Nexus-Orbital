@@ -2,7 +2,7 @@ import math
 import requests
 import json
 import os
-import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
@@ -56,71 +56,79 @@ def fetch_neo_feed(start_date, end_date):
         return cached
 
     url = "https://api.nasa.gov/neo/rest/v1/feed"
-    asteroids_by_id = {}
 
+    # Build all date chunks up front
+    chunks = []
     current = start_date
     while current < end_date:
         chunk_end = min(current + timedelta(days=7), end_date)
+        chunks.append((current, chunk_end))
+        current = chunk_end + timedelta(days=1)
+
+    def _fetch_chunk(chunk_start, chunk_end):
         params = {
-            "start_date": current.strftime("%Y-%m-%d"),
+            "start_date": chunk_start.strftime("%Y-%m-%d"),
             "end_date": chunk_end.strftime("%Y-%m-%d"),
             "api_key": NASA_API_KEY,
         }
         try:
             response = requests.get(url, params=params, timeout=30)
             response.raise_for_status()
-            data = response.json()
+            return response.json().get("near_earth_objects", {})
         except requests.RequestException as e:
             print(f"Warning: NeoWs request failed for {params['start_date']}: {e}")
-            current = chunk_end + timedelta(days=1)
-            continue
+            return {}
 
-        for date_str, neo_list in data.get("near_earth_objects", {}).items():
-            for neo in neo_list:
-                try:
-                    neo_id = neo["id"]
-                    name = neo["name"]
-                    abs_mag = neo["absolute_magnitude_h"]
+    # Fetch all chunks in parallel (4 workers — respectful of NASA rate limits)
+    asteroids_by_id = {}
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = {executor.submit(_fetch_chunk, s, e): (s, e) for s, e in chunks}
+        for future in as_completed(futures):
+            neo_by_date = future.result()
+            for date_str, neo_list in neo_by_date.items():
+                for neo in neo_list:
+                    try:
+                        neo_id = neo["id"]
+                        name = neo["name"]
+                        abs_mag = neo["absolute_magnitude_h"]
 
-                    diam = neo["estimated_diameter"]["kilometers"]
-                    diameter_km = (
-                        diam["estimated_diameter_min"] + diam["estimated_diameter_max"]
-                    ) / 2
+                        diam = neo["estimated_diameter"]["kilometers"]
+                        diameter_km = (
+                            diam["estimated_diameter_min"] + diam["estimated_diameter_max"]
+                        ) / 2
 
-                    is_hazardous = neo["is_potentially_hazardous_asteroid"]
+                        is_hazardous = neo["is_potentially_hazardous_asteroid"]
 
-                    approach = neo["close_approach_data"][0]
-                    close_approach_date = approach["close_approach_date"]
-                    velocity_km_s = float(
-                        approach["relative_velocity"]["kilometers_per_second"]
-                    )
-                    miss_distance_au = float(approach["miss_distance"]["astronomical"])
-                    miss_distance_km = float(approach["miss_distance"]["kilometers"])
+                        approach = neo["close_approach_data"][0]
+                        close_approach_date = approach["close_approach_date"]
+                        velocity_km_s = float(
+                            approach["relative_velocity"]["kilometers_per_second"]
+                        )
+                        miss_distance_au = float(approach["miss_distance"]["astronomical"])
+                        miss_distance_km = float(approach["miss_distance"]["kilometers"])
 
-                    asteroid = {
-                        "id": neo_id,
-                        "name": name,
-                        "absolute_magnitude_h": abs_mag,
-                        "diameter_km": round(diameter_km, 4),
-                        "is_potentially_hazardous_asteroid": is_hazardous,
-                        "close_approach_date": close_approach_date,
-                        "velocity_km_s": round(velocity_km_s, 4),
-                        "miss_distance_au": round(miss_distance_au, 6),
-                        "miss_distance_km": round(miss_distance_km, 2),
-                    }
+                        asteroid = {
+                            "id": neo_id,
+                            "name": name,
+                            "absolute_magnitude_h": abs_mag,
+                            "diameter_km": round(diameter_km, 4),
+                            "is_potentially_hazardous_asteroid": is_hazardous,
+                            "close_approach_date": close_approach_date,
+                            "velocity_km_s": round(velocity_km_s, 4),
+                            "miss_distance_au": round(miss_distance_au, 6),
+                            "miss_distance_km": round(miss_distance_km, 2),
+                        }
 
-                    # Keep the closest approach when duplicates exist
-                    if (
-                        neo_id not in asteroids_by_id
-                        or asteroid["miss_distance_au"]
-                        < asteroids_by_id[neo_id]["miss_distance_au"]
-                    ):
-                        asteroids_by_id[neo_id] = asteroid
+                        # Keep the closest approach when duplicates exist
+                        if (
+                            neo_id not in asteroids_by_id
+                            or asteroid["miss_distance_au"]
+                            < asteroids_by_id[neo_id]["miss_distance_au"]
+                        ):
+                            asteroids_by_id[neo_id] = asteroid
 
-                except (KeyError, IndexError, ValueError, TypeError):
-                    continue
-
-        current = chunk_end + timedelta(days=1)
+                    except (KeyError, IndexError, ValueError, TypeError):
+                        continue
 
     results = list(asteroids_by_id.values())
     save_cache(results)
@@ -174,16 +182,16 @@ def enrich_with_orbits(asteroids):
     top_50 = sorted_all[:50]
     rest = sorted_all[50:]
 
-    enriched = []
-    for asteroid in top_50:
+    def _enrich_one(asteroid):
         orbital = fetch_orbital_elements(asteroid["id"])
         if orbital and orbital.get("semi_major_axis_au"):
-            enriched.append({**asteroid, **orbital})
-        else:
-            # Synthesise approximate elements from close-approach kinematics
-            synthetic = _synthesise_orbital_elements(asteroid)
-            enriched.append({**asteroid, **synthetic})
-        time.sleep(0.3)
+            return {**asteroid, **orbital}
+        synthetic = _synthesise_orbital_elements(asteroid)
+        return {**asteroid, **synthetic}
+
+    # Fetch all 50 orbital elements in parallel
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        enriched = list(executor.map(_enrich_one, top_50))
 
     return enriched + rest
 
