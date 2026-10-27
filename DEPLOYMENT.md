@@ -1,6 +1,6 @@
 # Deployment Guide
 
-Step-by-step instructions for deploying to Render.com (recommended — free tier available).
+Hosting instructions for Nexus Orbital. To run a GitHub download on your own computer, follow the [local setup in README.md](README.md#run-locally-macos-linux-or-windows) first.
 
 ---
 
@@ -8,7 +8,9 @@ Step-by-step instructions for deploying to Render.com (recommended — free tier
 
 - GitHub account with the repo pushed
 - NASA API key from [api.nasa.gov](https://api.nasa.gov/)
-- Cesium Ion token from [ion.cesium.com](https://ion.cesium.com/)
+- Python 3.11 for the pinned dependencies
+
+The current UI uses Plotly and does not require a Cesium Ion token.
 
 ---
 
@@ -19,19 +21,19 @@ Sign up at [render.com](https://render.com/) (free tier available).
 
 ### 2. Create a New Web Service
 - Click **New +** → **Web Service**
-- Connect your GitHub account and select the `Asteroid_Project` repository
+- Connect your GitHub account and select the `Nexus-Orbital` repository
 
 ### 3. Configure the service
 | Setting | Value |
 |---------|-------|
 | **Name** | `asteroid-tracker` (or any name) |
-| **Branch** | `main` |
+| **Branch** | `master-temp` (current default branch) |
 | **Runtime** | Python 3 |
 | **Build Command** | `pip install -r requirements.txt` |
-| **Start Command** | `gunicorn app:app` |
+| **Start Command** | `gunicorn app:app --workers 2 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT` |
 | **Instance Type** | Free (or Starter for better performance) |
 
-Render will auto-detect the `Procfile` — the Start Command is filled in automatically.
+Enter both commands explicitly in Render; the start command matches the repository's `Procfile`. See [Render's Flask deployment guide](https://render.com/docs/deploy-flask).
 
 ### 4. Set Environment Variables
 In the Render dashboard → **Environment** tab, add:
@@ -39,8 +41,10 @@ In the Render dashboard → **Environment** tab, add:
 | Key | Value |
 |-----|-------|
 | `NASA_API_KEY` | Your NASA API key |
-| `CESIUM_ION_TOKEN` | Your Cesium Ion token |
+| `PYTHON_VERSION` | `3.11.15` (the Python version used for the clean-install check) |
 | `FLASK_DEBUG` | `false` |
+
+Render supports an explicit `PYTHON_VERSION` environment variable; do not rely on `runtime.txt` to select its runtime. See [Render's Python version configuration](https://render.com/docs/python-version). Let the hosting platform provide `PORT`; the `.env.example` port is for local use.
 
 ### 5. Deploy
 Click **Create Web Service**. Render will:
@@ -49,10 +53,10 @@ Click **Create Web Service**. Render will:
 3. Start gunicorn
 4. Assign a URL like `https://asteroid-tracker.onrender.com`
 
-First deploy takes 2–3 minutes. Subsequent deploys trigger automatically on every push to `main`.
+First deploy takes 2–3 minutes. Subsequent deploys trigger automatically on pushes to the branch connected to the service.
 
 ### 6. Verify
-Visit your Render URL. The app should load the asteroid table within 30 seconds.
+Visit your Render URL. The page can load before the asteroid table. The initial NASA/JPL/Asterank fetch may take a minute or longer; check the service logs for API errors and `[startup] Asteroid cache ready.`. An empty result can also be cached, so confirm that records actually appear.
 
 **Note on cold starts:** Free tier services sleep after 15 minutes of inactivity. The first request after sleeping takes 30–60 seconds.
 
@@ -65,7 +69,7 @@ Alternative to Render with similar ease of use.
 1. Go to [railway.app](https://railway.app/) → **New Project** → **Deploy from GitHub**
 2. Select your repo
 3. Railway auto-detects Python and uses the `Procfile`
-4. Go to **Variables** and add `NASA_API_KEY` and `CESIUM_ION_TOKEN`
+4. Go to **Variables** and add `NASA_API_KEY`; configure the build runtime to use Python 3.11
 5. Railway assigns a domain automatically
 
 ---
@@ -83,7 +87,7 @@ fly auth login
 
 # In the project directory
 fly launch   # follows prompts, creates fly.toml
-fly secrets set NASA_API_KEY=your_key CESIUM_ION_TOKEN=your_token
+fly secrets set NASA_API_KEY=your_key
 fly deploy
 ```
 
@@ -94,15 +98,16 @@ fly deploy
 ### App crashes on startup
 - Check logs in Render dashboard → **Logs** tab
 - Ensure all packages in `requirements.txt` install successfully
-- poliastro sometimes has build issues — if so, the app falls back to pure-math calculations automatically
+- If pip fails, fix the installation first: use Python 3.11 and rerun the build command. The pure-math fallback handles unavailable orbital imports at runtime; it does not bypass a failed dependency installation.
 
 ### Asteroid data not loading
 - Check `NASA_API_KEY` is set correctly
-- `DEMO_KEY` has a rate limit of 30 req/hour — use a real key for production
+- Use a real NASA key; `DEMO_KEY` is rate-limited and unsuitable for this app's year-long feed
+- After correcting a key, refresh the cache in the UI; a failed fetch may have cached an empty result
 
-### Globe not showing
-- Check `CESIUM_ION_TOKEN` is set correctly
-- Verify the token has not expired in your Cesium Ion dashboard
+### 3D view not showing
+- The current UI uses Plotly, so a Cesium token is not needed
+- Check WebGL support and browser access to `cdn.plot.ly` and `cdn.jsdelivr.net`
 
 ### Mission planning times out
 - The free Render tier has limited CPU — mission planning may take longer
@@ -118,7 +123,7 @@ fly deploy
 
 ## Performance Notes
 
-- First asteroid data load: ~15–30 seconds (fetches from NASA + JPL + Asterank)
+- First asteroid data load: can take a minute or longer (fetches from NASA + JPL + Asterank)
 - Subsequent loads: ~0.1 seconds (from cache)
 - Mission planning: 5–60 seconds depending on window size
 - Globe rendering: depends on user's GPU/browser
